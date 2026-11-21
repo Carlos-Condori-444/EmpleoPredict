@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - EmpleoPredict{% endblock %}
+
+{% block content %}
+<div class="text-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="inline-flex items-center space-x-2 bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 uppercase tracking-wider">
+        <i class="fa-solid fa-sparkles"></i>
+        <span>Sistema Inteligente de Orientación Laboral</span>
+    </div>
+    
+    <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight sm:text-5xl">
+        Conecta tus competencias con lo que el mercado laboral <span class="text-indigo-600">realmente demanda</span>
+    </h1>
+    
+    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+        Sube tu Curriculum Vitae en PDF. Nuestro sistema extraerá automáticamente tus habilidades técnicas y blandas, comparándolas con ofertas laborales y fuentes oficiales para orientar tu desarrollo profesional.
+    </p>
+
+    <div class="mt-8 flex justify-center gap-4">
+        <a href="{% url 'subir_cv' %}" class="px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 transition flex items-center space-x-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Subir y Analizar mi CV</span>
+        </a>
+        <a href="/admin/" class="px-6 py-3 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold shadow-sm hover:bg-slate-50 transition flex items-center space-x-2">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Ir al Panel de Control</span>
+        </a>
+    </div>
+
+    <!-- Tarjetas de Características -->
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Lectura Automática de CV</h3>
+            <p class="text-sm text-slate-500 mt-2">Extrae datos de contacto y competencias en segundos desde tu PDF sin formularios manuales eternos.</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Detección de Competencias</h3>
+            <p class="text-sm text-slate-500 mt-2">Identifica tus habilidades blandas y técnicas clave mediante algoritmos de procesamiento de texto.</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center text-xl mb-4">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Reservas y Orientación</h3>
+            <p class="text-sm text-slate-500 mt-2">Accede a asesorías personalizadas y talleres de capacitación según la demanda laboral proyectada.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
