@@ -1,4 +1,5 @@
 import re
+from html import unescape
 from urllib.parse import quote
 
 import requests
@@ -11,6 +12,8 @@ from .models import FuenteDato, OfertaLaboral
 from .utils import extraer_competencias_del_texto
 
 URL_BASE = 'https://pe.computrabajo.com'
+SITIO_ARBEITNOW = 'https://www.arbeitnow.com'
+URL_ARBEITNOW = f'{SITIO_ARBEITNOW}/api/job-board-api'
 
 
 class ErrorScraping(Exception):
@@ -75,10 +78,57 @@ def scrapear_computrabajo(palabra_clave='python'):
             raise ErrorScraping('Computrabajo devolvió una verificación de navegador.')
         raise ErrorScraping('No se encontraron tarjetas de ofertas. Verifica el término o el HTML de la fuente.')
 
+    return _guardar_ofertas('Computrabajo', URL_BASE, ofertas)
+
+
+def importar_arbeitnow(palabra_clave='python', limite=10):
+    """Importa coincidencias de la primera página de la API pública."""
+    termino = palabra_clave.strip().casefold()
+    if not termino:
+        raise ErrorScraping('Ingresa una palabra clave.')
+    if limite < 1:
+        raise ErrorScraping('El límite debe ser mayor que cero.')
+
+    try:
+        respuesta = requests.get(URL_ARBEITNOW, timeout=15)
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+    except requests.RequestException as error:
+        raise ErrorScraping(f'No se pudieron consultar las ofertas de Arbeitnow: {error}') from error
+
+    if not isinstance(datos, dict) or not isinstance(datos.get('data'), list):
+        raise ErrorScraping('La API de Arbeitnow devolvió un formato inesperado.')
+
+    ofertas = []
+    for fila in datos['data']:
+        if not isinstance(fila, dict):
+            continue
+        titulo = (fila.get('title') or '').strip()
+        if not titulo:
+            continue
+        descripcion = BeautifulSoup(unescape(fila.get('description') or ''), 'html.parser').get_text(' ', strip=True)
+        if termino not in f'{titulo} {descripcion}'.casefold():
+            continue
+        ofertas.append({
+            'titulo': titulo[:200],
+            'empresa': (fila.get('company_name') or '').strip()[:150] or None,
+            'region': (fila.get('location') or '').strip()[:100] or None,
+            'descripcion': descripcion or None,
+        })
+        if len(ofertas) == limite:
+            break
+
+    return _guardar_ofertas('Arbeitnow', SITIO_ARBEITNOW, ofertas)
+
+
+def _guardar_ofertas(nombre, url_base, ofertas):
+    if not ofertas:
+        return 0
+
     with transaction.atomic():
-        fuente = FuenteDato.objects.filter(url_base=URL_BASE).order_by('pk').first()
+        fuente = FuenteDato.objects.filter(url_base=url_base).order_by('pk').first()
         if fuente is None:
-            fuente = FuenteDato.objects.create(nombre='Computrabajo', url_base=URL_BASE, tipo='Privada')
+            fuente = FuenteDato.objects.create(nombre=nombre, url_base=url_base, tipo='Privada')
         nuevas = 0
         for datos in ofertas:
             empresa = Q(empresa__iexact=datos['empresa']) if datos['empresa'] else Q(empresa__isnull=True)

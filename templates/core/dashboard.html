@@ -20,6 +20,11 @@
     <p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Datos de ejemplo. Las cifras y gráficos de esta vista son ficticios.</p>
     {% endif %}
 
+    {% if incluye_arbeitnow %}
+    <p class="mb-5 text-sm text-slate-600">
+        Incluye ofertas de Europa de <a href="https://www.arbeitnow.com/" class="font-semibold text-indigo-700 underline">Arbeitnow</a>.
+    </p>
+    {% endif %}
     <dl class="grid gap-4 sm:grid-cols-3">
         {% for item in estadisticas %}
         <div class="rounded-xl border border-slate-200 bg-white p-5">

@@ -97,6 +97,7 @@ def dashboard_view(request):
     ]
     return render(request, 'core/dashboard.html', {
         'demo': demo, 'estadisticas': estadisticas, 'competencias': competencias, 'regiones': regiones,
+        'incluye_arbeitnow': not demo and OfertaLaboral.objects.filter(fuente__nombre='Arbeitnow').exists(),
     })
 
 

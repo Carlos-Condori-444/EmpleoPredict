@@ -109,3 +109,22 @@ class ScraperTestCase(TestCase):
                 call_command('scrapear', keyword='python')
 
         self.assertFalse(FuenteDato.objects.exists())
+
+    def test_arbeitnow_importa_coincidencias_y_respeta_el_limite(self):
+        filas = [
+            {'title': 'Diseñadora', 'description': 'Diseño gráfico'},
+            {'title': 'Desarrollo', 'company_name': 'Prueba', 'location': 'Berlin',
+             'description': '&lt;p&gt;Trabajo con Python&lt;/p&gt;'},
+            {'title': 'Python y datos', 'location': 'Munich'},
+        ]
+        with patch('core.scraper.requests.get') as solicitar:
+            solicitar.return_value.json.return_value = {'data': filas}
+            call_command('scrapear', fuente='arbeitnow', keyword='PYTHON', limite=1)
+            call_command('scrapear', fuente='arbeitnow', keyword='PYTHON', limite=1)
+
+        oferta = OfertaLaboral.objects.get()
+        self.assertEqual(oferta.fuente.nombre, 'Arbeitnow')
+        self.assertEqual(oferta.region, 'Berlin')
+        self.assertEqual(oferta.descripcion, 'Trabajo con Python')
+        self.assertTrue(oferta.competencias.filter(nombre='Python').exists())
+        self.assertContains(self.client.get('/dashboard/'), 'https://www.arbeitnow.com/')
