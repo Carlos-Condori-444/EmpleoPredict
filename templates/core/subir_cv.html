@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Subir CV - EmpleoPredict{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Encabezado de la página -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900 flex items-center space-x-3">
+            <i class="fa-solid fa-file-invoice text-indigo-600"></i>
+            <span>Módulo de Carga y Extracción de CV</span>
+        </h1>
+        <p class="text-slate-600 mt-1">
+            Sube tu currículum en formato PDF para que el motor inteligente extraiga tu información personal y detecte tus competencias.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Columna Izquierda: Formulario de Subida -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-indigo-600"></i>
+                    <span>Cargar nuevo archivo</span>
+                </h2>
+
+                <form method="POST" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Archivo Curriculum Vitae (.pdf)
+                        </label>
+                        {{ form.archivo }}
+                        {% if form.archivo.errors %}
+                            <div class="text-rose-600 text-xs mt-1 font-medium">
+                                {{ form.archivo.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <p class="text-xs text-slate-400 mt-2">
+                            * Solo archivos en formato PDF, tamaño máximo 10 MB.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Subir y Procesar Automáticamente</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Historial de CVs subidos -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+                    <span>Historial de CVs Procesados</span>
+                </h2>
+
+                {% if documentos %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-semibold text-slate-600">Archivo</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-slate-600">Versión</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-slate-600">Estado</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-slate-600">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% for doc in documentos %}
+                                <tr>
+                                    <td class="px-3 py-2 font-medium text-slate-800">{{ doc.nombre_archivo }}</td>
+                                    <td class="px-3 py-2 text-slate-500">v{{ doc.version }}</td>
+                                    <td class="px-3 py-2">
+                                        {% if doc.estado_procesamiento == 'PROCESADO' %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                                <i class="fa-solid fa-check mr-1"></i> PROCESADO
+                                            </span>
+                                        {% elif doc.estado_procesamiento == 'PENDIENTE' %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">
+                                                <i class="fa-solid fa-clock mr-1"></i> PENDIENTE
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800">
+                                                <i class="fa-solid fa-xmark mr-1"></i> ERROR
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3 py-2 text-slate-400 text-xs">{{ doc.fecha_subida|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-slate-400 italic">Aún no has subido ningún CV. Sube tu primer PDF arriba.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Datos Extraídos y Competencias -->
+        <div class="space-y-6">
+            <!-- Tarjeta de Datos de Contacto Detectados -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-address-card text-indigo-600"></i>
+                    <span>Datos Personales Extraídos</span>
+                </h3>
+
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Usuario:</span>
+                        <span class="font-medium text-slate-800">{{ user.username }}</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Teléfono:</span>
+                        <span class="font-medium text-slate-800">
+                            {{ datos_personales.telefono|default:"No detectado aún" }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between py-1 border-b border-slate-100">
+                        <span class="text-slate-500">LinkedIn:</span>
+                        <span class="font-medium text-slate-800 truncate max-w-[150px]">
+                            {% if datos_personales.linkedin_url %}
+                                <a href="{{ datos_personales.linkedin_url }}" target="_blank" class="text-indigo-600 hover:underline">Ver perfil</a>
+                            {% else %}
+                                <span class="text-slate-400">No detectado</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between py-1">
+                        <span class="text-slate-500">GitHub:</span>
+                        <span class="font-medium text-slate-800 truncate max-w-[150px]">
+                            {% if datos_personales.github_url %}
+                                <a href="{{ datos_personales.github_url }}" target="_blank" class="text-indigo-600 hover:underline">Ver repositorio</a>
+                            {% else %}
+                                <span class="text-slate-400">No detectado</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Competencias Detectadas -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-award text-amber-500"></i>
+                    <span>Competencias Detectadas ({{ competencias.count }})</span>
+                </h3>
+
+                {% if competencias %}
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for uc in competencias %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                {% if uc.competencia.tipo == 'TECNICA' %}
+                                    bg-indigo-50 text-indigo-700 border border-indigo-200
+                                {% else %}
+                                    bg-emerald-50 text-emerald-700 border border-emerald-200
+                                {% endif %}">
+                                {% if uc.competencia.tipo == 'TECNICA' %}
+                                    <i class="fa-solid fa-code mr-1 text-[10px]"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-heart mr-1 text-[10px]"></i>
+                                {% endif %}
+                                {{ uc.competencia.nombre }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-xs text-slate-400 italic">
+                        Sube un CV con habilidades como Python, SQL, Excel, Git o Liderazgo para verlas reflejadas aquí.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

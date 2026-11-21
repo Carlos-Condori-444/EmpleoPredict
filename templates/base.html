@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EmpleoPredict{% endblock %}</title>
+    <!-- Tailwind CSS CDN para desarrollo rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+    
+    <!-- Navbar -->
+    <nav class="bg-indigo-700 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-chart-line text-2xl text-indigo-300"></i>
+                    <a href="{% url 'inicio' %}" class="text-xl font-bold tracking-tight hover:text-indigo-200">
+                        Empleo<span class="text-indigo-300">Predict</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'inicio' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Inicio</a>
+                    <a href="{% url 'subir_cv' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-indigo-800 hover:bg-indigo-900 transition flex items-center space-x-1">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <span>Subir CV</span>
+                    </a>
+                    <a href="/admin/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition flex items-center space-x-1">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Admin</span>
+                    </a>
+                    {% if user.is_authenticated %}
+                        <span class="text-xs bg-indigo-900 text-indigo-200 px-2.5 py-1 rounded-full font-semibold">
+                            <i class="fa-solid fa-user"></i> {{ user.username }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notificaciones / Mensajes -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded-lg text-sm font-medium shadow-sm flex items-center space-x-3 
+                        {% if message.tags == 'success' %} bg-emerald-50 text-emerald-800 border border-emerald-200
+                        {% elif message.tags == 'error' %} bg-rose-50 text-rose-800 border border-rose-200
+                        {% else %} bg-amber-50 text-amber-800 border border-amber-200 {% endif %}">
+                        {% if message.tags == 'success' %}
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class="fa-solid fa-circle-exclamation text-rose-500 text-lg"></i>
+                        {% else %}
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg"></i>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-sm text-slate-500">
+        <p>EmpleoPredict &copy; 2026 - Análisis de demanda laboral y competencias.</p>
+    </footer>
+
+</body>
+</html>
