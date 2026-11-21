@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | EmpleoPredict{% endblock %}
+
+{% block content %}
+<section aria-labelledby="dashboard-titulo">
+    <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 id="dashboard-titulo" class="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Dashboard de empleo</h1>
+            <p class="mt-2 text-slate-600">Ofertas registradas y competencias solicitadas por las empresas.</p>
+        </div>
+        {% if demo %}
+        <a href="{% url 'dashboard' %}" class="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Ver datos registrados</a>
+        {% else %}
+        <a href="{% url 'dashboard' %}?demo=1" class="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Ver datos de ejemplo</a>
+        {% endif %}
+    </header>
+
+    {% if demo %}
+    <p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Datos de ejemplo. Las cifras y gráficos de esta vista son ficticios.</p>
+    {% endif %}
+
+    {% if incluye_arbeitnow %}
+    <p class="mb-5 text-sm text-slate-600">
+        Incluye ofertas de Europa de <a href="https://www.arbeitnow.com/" class="font-semibold text-indigo-700 underline">Arbeitnow</a>.
+    </p>
+    {% endif %}
+    <dl class="grid gap-4 sm:grid-cols-3">
+        {% for item in estadisticas %}
+        <div class="rounded-xl border border-slate-200 bg-white p-5">
+            <dt class="flex items-center gap-2 text-sm font-medium text-slate-600">
+                <i class="{{ item.icono }} w-5 text-indigo-600" aria-hidden="true"></i>{{ item.titulo }}
+            </dt>
+            <dd class="mt-3 text-4xl font-bold tabular-nums text-slate-950">{{ item.total }}</dd>
+        </div>
+        {% endfor %}
+    </dl>
+
+    <div class="mt-6 grid gap-5 lg:grid-cols-2">
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+            <h2 class="text-lg font-bold text-slate-950">Top 5 competencias más demandadas</h2>
+            {% if competencias %}
+            <div class="relative mt-5 h-72">
+                <canvas id="competencias-chart" role="img" aria-label="Gráfico de barras de competencias más demandadas"></canvas>
+            </div>
+            <details class="mt-3 text-sm text-slate-600">
+                <summary class="cursor-pointer font-medium">Ver cifras de competencias</summary>
+                <ul class="mt-2 space-y-1">
+                    {% for item in competencias %}<li>{{ item.nombre }} · {{ item.total }}</li>{% endfor %}
+                </ul>
+            </details>
+            {% else %}
+            <p class="mt-5 text-sm text-slate-500">Aún no hay ofertas con competencias asociadas.</p>
+            {% endif %}
+        </article>
+        <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+            <h2 class="text-lg font-bold text-slate-950">Ofertas por región</h2>
+            {% if regiones %}
+            <div class="relative mt-5 h-72">
+                <canvas id="regiones-chart" role="img" aria-label="Gráfico de pastel de distribución de ofertas por región"></canvas>
+            </div>
+            <details class="mt-3 text-sm text-slate-600">
+                <summary class="cursor-pointer font-medium">Ver cifras por región</summary>
+                <ul class="mt-2 space-y-1">
+                    {% for item in regiones %}<li>{{ item.nombre }} · {{ item.total }}</li>{% endfor %}
+                </ul>
+            </details>
+            {% else %}
+            <p class="mt-5 text-sm text-slate-500">Aún no hay ofertas laborales registradas.</p>
+            {% endif %}
+        </article>
+    </div>
+    <p id="chart-error" hidden class="mt-4 text-sm text-amber-800">No se pudieron cargar los gráficos. Puedes consultar las cifras debajo de cada título.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if competencias or regiones %}
+{{ competencias|json_script:"competencias-data" }}
+{{ regiones|json_script:"regiones-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script>
+    if (typeof Chart === 'undefined') {
+        document.querySelector('#chart-error').hidden = false;
+    } else {
+        const competencias = JSON.parse(document.querySelector('#competencias-data').textContent);
+        const regiones = JSON.parse(document.querySelector('#regiones-data').textContent);
+        const chartOptions = { responsive: true, maintainAspectRatio: false };
+
+        if (competencias.length) {
+            new Chart(document.querySelector('#competencias-chart'), {
+                type: 'bar',
+                data: {
+                    labels: competencias.map(item => item.nombre),
+                    datasets: [{ label: 'Ofertas', data: competencias.map(item => item.total), backgroundColor: '#4f46e5', borderRadius: 5 }],
+                },
+                options: {
+                    ...chartOptions, indexAxis: 'y',
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+                    plugins: { legend: { display: false } },
+                },
+            });
+        }
+        if (regiones.length) {
+            new Chart(document.querySelector('#regiones-chart'), {
+                type: 'pie',
+                data: {
+                    labels: regiones.map(item => item.nombre),
+                    datasets: [{
+                        label: 'Ofertas', data: regiones.map(item => item.total),
+                        backgroundColor: ['#4338ca', '#0e7490', '#047857', '#b45309', '#be185d', '#475569'],
+                    }],
+                },
+                options: { ...chartOptions, plugins: { legend: { position: 'bottom' } } },
+            });
+        }
+    }
+</script>
+{% endif %}
+{% endblock %}

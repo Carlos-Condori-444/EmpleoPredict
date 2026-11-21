@@ -10,32 +10,23 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
     
-    <!-- Navbar -->
-    <nav class="bg-indigo-700 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-chart-line text-2xl text-indigo-300"></i>
-                    <a href="{% url 'inicio' %}" class="text-xl font-bold tracking-tight hover:text-indigo-200">
-                        Empleo<span class="text-indigo-300">Predict</span>
-                    </a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'inicio' %}" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition">Inicio</a>
-                    <a href="{% url 'subir_cv' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-indigo-800 hover:bg-indigo-900 transition flex items-center space-x-1">
-                        <i class="fa-solid fa-file-arrow-up"></i>
-                        <span>Subir CV</span>
-                    </a>
-                    <a href="/admin/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-600 transition flex items-center space-x-1">
-                        <i class="fa-solid fa-gear"></i>
-                        <span>Admin</span>
-                    </a>
-                    {% if user.is_authenticated %}
-                        <span class="text-xs bg-indigo-900 text-indigo-200 px-2.5 py-1 rounded-full font-semibold">
-                            <i class="fa-solid fa-user"></i> {{ user.username }}
-                        </span>
-                    {% endif %}
-                </div>
+    <nav aria-label="Navegación principal" class="bg-indigo-700 text-white shadow-md">
+        <div class="container mx-auto flex flex-col gap-2 px-4 py-3 md:flex-row md:items-center md:justify-between md:gap-5">
+            <a href="{% url 'inicio' %}" class="flex shrink-0 items-center gap-2 text-xl font-bold tracking-tight hover:text-indigo-200">
+                <i class="fa-solid fa-chart-line text-indigo-300" aria-hidden="true"></i>
+                <span>Empleo<span class="text-indigo-300">Predict</span></span>
+            </a>
+            <div class="flex flex-wrap items-center gap-1 text-sm font-medium">
+                <a href="{% url 'inicio' %}" {% if request.resolver_match.url_name == 'inicio' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Inicio</a>
+                <a href="{% url 'subir_cv' %}" {% if request.resolver_match.url_name == 'subir_cv' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Subir CV</a>
+                <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Dashboard</a>
+                <a href="{% url 'servicios' %}" {% if request.resolver_match.url_name == 'servicios' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Servicios</a>
+                <a href="{% url 'admin:index' %}" class="rounded-md px-3 py-2 hover:bg-indigo-600">Admin</a>
+                {% if user.is_authenticated %}
+                    <span class="hidden items-center gap-1 rounded-full bg-indigo-900 px-2.5 py-1 text-xs text-indigo-100 md:flex">
+                        <i class="fa-solid fa-user" aria-hidden="true"></i>{{ user.username }}
+                    </span>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -70,5 +61,6 @@
         <p>EmpleoPredict &copy; 2026 - Análisis de demanda laboral y competencias.</p>
     </footer>
 
+    {% block scripts %}{% endblock %}
 </body>
 </html>
