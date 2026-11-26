@@ -1,17 +1,42 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
 from django.db.models import Count, Value
 from django.db.models.functions import Coalesce, NullIf
 
-from .forms import SubirCVForm
+from .forms import LoginForm, RegistroForm, SubirCVForm
 from .models import Competencia, DatosPersonales, DocumentoCV, OfertaLaboral, ServicioCapacitacion, UsuarioCompetencia
 from .utils import procesar_cv
 
 def inicio(request):
     """Página de inicio del proyecto EmpleoPredict."""
     return render(request, 'core/inicio.html')
+
+
+login_view = LoginView.as_view(
+    template_name='core/login.html',
+    authentication_form=LoginForm,
+    redirect_authenticated_user=True,
+)
+
+
+def registro_view(request):
+    if request.user.is_authenticated:
+        return redirect('subir_cv')
+
+    if request.method == 'POST':
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Cuenta creada correctamente. Ya puedes subir tu CV.')
+            return redirect('subir_cv')
+    else:
+        form = RegistroForm()
+
+    return render(request, 'core/registro.html', {'form': form})
 
 @login_required
 def subir_cv_view(request):

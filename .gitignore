@@ -21,3 +21,4 @@ Thumbs.db
 # Archivos de pruebas y cobertura
 .coverage
 htmlcov/
+/media
