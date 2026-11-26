@@ -21,11 +21,19 @@
                 <a href="{% url 'subir_cv' %}" {% if request.resolver_match.url_name == 'subir_cv' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Subir CV</a>
                 <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Dashboard</a>
                 <a href="{% url 'servicios' %}" {% if request.resolver_match.url_name == 'servicios' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Servicios</a>
+                <a href="{% url 'mis_reservas' %}" {% if request.resolver_match.url_name == 'mis_reservas' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Mis reservas</a>
                 <a href="{% url 'admin:index' %}" class="rounded-md px-3 py-2 hover:bg-indigo-600">Admin</a>
                 {% if user.is_authenticated %}
                     <span class="hidden items-center gap-1 rounded-full bg-indigo-900 px-2.5 py-1 text-xs text-indigo-100 md:flex">
                         <i class="fa-solid fa-user" aria-hidden="true"></i>{{ user.username }}
                     </span>
+                    <form method="post" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="rounded-md px-3 py-2 text-indigo-100 hover:bg-indigo-600 hover:text-white">Cerrar sesión</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" {% if request.resolver_match.url_name == 'login' %}aria-current="page"{% endif %} class="rounded-md px-3 py-2 hover:bg-indigo-600 aria-[current=page]:bg-indigo-900">Iniciar sesión</a>
+                    <a href="{% url 'registro' %}" {% if request.resolver_match.url_name == 'registro' %}aria-current="page"{% endif %} class="rounded-md bg-indigo-900 px-3 py-2 hover:bg-indigo-800">Registrarse</a>
                 {% endif %}
             </div>
         </div>

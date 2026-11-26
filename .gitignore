@@ -21,3 +21,11 @@ Thumbs.db
 # Archivos de pruebas y cobertura
 .coverage
 htmlcov/
+
+# Base de datos local y archivos subidos en pruebas
+db.sqlite3
+*.sqlite3-journal
+media/
+
+# Documentos locales del curso
+PROY_LineamientosProyectoFinal*

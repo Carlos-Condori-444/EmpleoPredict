@@ -4,13 +4,34 @@
 
 {% block content %}
 <section aria-labelledby="servicios-titulo">
-    <header class="mb-8">
-        <h1 id="servicios-titulo" class="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Servicios de capacitación</h1>
-        <p class="mt-2 text-slate-600">Consulta el precio y la capacidad de cada servicio.</p>
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 id="servicios-titulo" class="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Servicios de capacitación</h1>
+            <p class="mt-2 text-slate-600">Consulta el precio, la capacidad por fecha y reserva tu cupo.</p>
+        </div>
+        {% if not demo %}
+        <a href="{% url 'mis_reservas' %}" class="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
+            Ver mis reservas
+        </a>
+        {% endif %}
     </header>
+
+    <form method="get" action="{% url 'servicios' %}" class="mb-6 flex flex-wrap items-center gap-3" role="search" aria-label="Buscar servicios de capacitación">
+        <label for="busqueda-servicios" class="sr-only">Buscar servicios por nombre o palabra clave</label>
+        <input id="busqueda-servicios" type="search" name="q" value="{{ consulta }}" placeholder="Buscar por nombre o palabra clave (ej. Python, CV)..." class="min-w-[240px] flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+        <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition">Buscar</button>
+        {% if consulta %}
+        <a href="{% url 'servicios' %}" class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Limpiar</a>
+        {% endif %}
+    </form>
+
+    {% if demo %}
     <p id="estado-reservas" class="mb-5 rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-        {% if demo %}Catálogo de ejemplo. {% endif %}Las reservas aún no están habilitadas.
+        Catálogo de ejemplo. Los servicios de demostración no admiten reservas reales.
     </p>
+    {% endif %}
+
+    {% if servicios %}
     <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {% for servicio in servicios %}
         <article class="flex flex-col rounded-xl border border-slate-200 bg-white p-6">
@@ -26,9 +47,18 @@
                     <dd class="mt-1 font-semibold text-slate-950">{{ servicio.capacidad_maxima }} personas</dd>
                 </div>
             </dl>
+            {% if demo %}
             <button type="button" disabled aria-describedby="estado-reservas" class="mt-5 w-full cursor-not-allowed rounded-lg bg-indigo-100 px-4 py-3 text-sm font-bold text-indigo-800">Reservar</button>
+            {% else %}
+            <a href="{% url 'reservar_servicio' servicio.pk %}" class="mt-5 block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center text-sm font-bold text-white hover:bg-indigo-700 transition">Reservar</a>
+            {% endif %}
         </article>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <p class="text-sm text-slate-600">No se encontraron servicios que coincidan con «{{ consulta }}».</p>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

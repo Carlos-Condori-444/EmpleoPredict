@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear cuenta | EmpleoPredict{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 sm:p-8">
+    <h1 class="text-2xl font-bold text-slate-950">Crear cuenta</h1>
+    <p class="mt-1 text-sm text-slate-600">Regístrate en EmpleoPredict para analizar tu CV y reservar capacitaciones.</p>
+
+    <form method="post" class="mt-6 space-y-4">
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div>
+            <label for="{{ field.id_for_label }}" class="mb-1.5 block text-sm font-semibold text-slate-700">
+                {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+            <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition">
+            Crear cuenta
+        </button>
+    </form>
+
+    <p class="mt-5 text-center text-sm text-slate-600">
+        ¿Ya tienes una cuenta?
+        <a href="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="font-semibold text-indigo-700 hover:underline">Inicia sesión</a>
+    </p>
+</div>
+{% endblock %}

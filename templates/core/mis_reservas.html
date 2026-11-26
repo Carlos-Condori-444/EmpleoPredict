@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis reservas | EmpleoPredict{% endblock %}
+
+{% block content %}
+<section aria-labelledby="mis-reservas-titulo">
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 id="mis-reservas-titulo" class="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Mis reservas</h1>
+            <p class="mt-2 text-slate-600">Consulta el estado y la fecha programada de tus reservas en EmpleoPredict.</p>
+        </div>
+        <a href="{% url 'servicios' %}" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+            Explorar servicios
+        </a>
+    </header>
+
+    {% if reservas %}
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50">
+                <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Servicio</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Fecha y hora (Perú)</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Precio</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Estado</th>
+                    <th class="px-4 py-3 text-left font-semibold text-slate-700">Registrada el</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for reserva in reservas %}
+                <tr>
+                    <td class="px-4 py-3 font-medium text-slate-900">{{ reserva.servicio.nombre }}</td>
+                    <td class="px-4 py-3 text-slate-700">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3 text-slate-700">S/ {{ reserva.servicio.precio|floatformat:2 }}</td>
+                    <td class="px-4 py-3">
+                        {% if reserva.estado == 'Confirmada' %}
+                        <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">{{ reserva.estado }}</span>
+                        {% elif reserva.estado == 'Cancelada' %}
+                        <span class="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800">{{ reserva.estado }}</span>
+                        {% else %}
+                        <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">{{ reserva.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-slate-500">{{ reserva.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <p class="text-slate-600">Todavía no tienes reservas registradas.</p>
+        <a href="{% url 'servicios' %}" class="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+            Ver servicios disponibles
+        </a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -75,10 +75,11 @@ class Competencia(models.Model):
         ('TECNICA', 'Técnica / Hard Skill'),
         ('BLANDA', 'Blanda / Soft Skill'),
     ]
-    nombre = models.CharField(max_length=120, unique=True)
+    nombre = models.CharField(max_length=200, unique=True)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     categoria = models.CharField(max_length=100, blank=True, null=True) # Tecnología, Salud, Gastronomía...
     descripcion = models.TextField(blank=True, null=True)
+    es_catalogo_cv = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.nombre} ({self.get_tipo_display()})"
@@ -147,12 +148,59 @@ class OfertaLaboral(models.Model):
     sector = models.CharField(max_length=100, blank=True, null=True)
     region = models.CharField(max_length=100, blank=True, null=True)
     salario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    url_original = models.URLField(max_length=500, blank=True, null=True)
     fuente = models.ForeignKey(FuenteDato, on_delete=models.CASCADE, related_name='ofertas')
     competencias = models.ManyToManyField(Competencia, related_name='ofertas', blank=True)
     fecha_extraccion = models.DateTimeField(auto_now_add=True)
+    es_historica = models.BooleanField(default=False, db_index=True)
+    codigo_externo = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    ocupacion = models.CharField(max_length=255, blank=True, null=True)
+    vacantes = models.PositiveIntegerField(default=1)
+    fecha_inicio_periodo = models.DateField(blank=True, null=True)
+    fecha_fin_periodo = models.DateField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['fuente', 'codigo_externo'],
+                condition=models.Q(codigo_externo__isnull=False),
+                name='unique_oferta_fuente_codigo_externo',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.titulo} - {self.region}"
+
+
+class IndicadorEmpleabilidadONG(models.Model):
+    CATEGORIA_CHOICES = [
+        ('ALCANCE', 'Alcance e impacto'),
+        ('HABILIDAD', 'Distribución de habilidades'),
+        ('BRECHA_CV', 'Brecha detectada en CVs'),
+    ]
+    fuente = models.ForeignKey(FuenteDato, on_delete=models.CASCADE, related_name='indicadores_ong')
+    clave = models.CharField(max_length=80)
+    anio = models.PositiveIntegerField()
+    titulo = models.CharField(max_length=200)
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    valor_numerico = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    unidad = models.CharField(max_length=30)
+    ambito = models.CharField(max_length=100, default='Latinoamérica (incluye Perú)')
+    descripcion = models.TextField()
+    url_documento = models.URLField(max_length=500)
+    competencias = models.ManyToManyField(Competencia, related_name='indicadores_ong', blank=True)
+    fecha_extraccion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['fuente', 'anio', 'clave'],
+                name='unique_indicador_ong_fuente_anio_clave',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.titulo} ({self.anio}) - {self.ambito}"
 
 # ==========================================
 # MÓDULO DE RESERVAS

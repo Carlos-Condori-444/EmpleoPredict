@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     DatosPersonales, PerfilProfesional, ExperienciaLaboral, FormacionAcademica,
     Competencia, UsuarioCompetencia, DocumentoCV,
-    FuenteDato, OfertaLaboral,
+    FuenteDato, OfertaLaboral, IndicadorEmpleabilidadONG,
     ServicioCapacitacion, Reserva
 )
 
@@ -65,10 +65,19 @@ class FuenteDatoAdmin(admin.ModelAdmin):
 
 @admin.register(OfertaLaboral)
 class OfertaLaboralAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'empresa', 'region', 'sector', 'fuente', 'fecha_extraccion')
-    list_filter = ('region', 'sector', 'fuente')
-    search_fields = ('titulo', 'empresa', 'descripcion')
+    list_display = ('titulo', 'empresa', 'region', 'sector', 'es_historica', 'vacantes', 'fuente', 'fecha_extraccion')
+    list_filter = ('es_historica', 'region', 'sector', 'fuente')
+    search_fields = ('titulo', 'empresa', 'ocupacion', 'codigo_externo', 'descripcion')
     filter_horizontal = ('competencias',) # Interfaz visual para seleccionar competencias
+    readonly_fields = ('fecha_extraccion',)
+
+
+@admin.register(IndicadorEmpleabilidadONG)
+class IndicadorEmpleabilidadONGAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'anio', 'categoria', 'valor_numerico', 'unidad', 'ambito', 'fuente', 'fecha_extraccion')
+    list_filter = ('categoria', 'anio', 'ambito', 'fuente')
+    search_fields = ('titulo', 'descripcion', 'clave')
+    filter_horizontal = ('competencias',)
     readonly_fields = ('fecha_extraccion',)
 
 # ==========================================

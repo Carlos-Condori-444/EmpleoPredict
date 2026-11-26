@@ -110,10 +110,10 @@ def extraer_datos_contacto(texto):
 
 def extraer_competencias_del_texto(texto):
     """
-    Busca coincidencias de competencias existentes en el catálogo dentro del texto.
+    Busca coincidencias de competencias del catálogo de CV dentro del texto.
     """
     poblar_catalogo_competencias()
-    todas_competencias = Competencia.objects.all()
+    todas_competencias = Competencia.objects.filter(es_catalogo_cv=True)
     competencias_encontradas = []
 
     texto_lower = texto.lower()

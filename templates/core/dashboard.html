@@ -71,6 +71,139 @@
         </article>
     </div>
     <p id="chart-error" hidden class="mt-4 text-sm text-amber-800">No se pudieron cargar los gráficos. Puedes consultar las cifras debajo de cada título.</p>
+
+    {% if mtpe_historico %}
+    <section aria-labelledby="mtpe-historico-titulo" class="mt-12 border-t border-slate-200 pt-10">
+        <header class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+                    Análisis Histórico Oficial · No son vacantes vigentes actuales
+                </span>
+                <h2 id="mtpe-historico-titulo" class="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                    Mercado laboral histórico del Perú (MTPE)
+                </h2>
+                <p class="mt-1 text-sm text-slate-600">
+                    Fuente oficial: {{ mtpe_historico.fuente.nombre|default:"MTPE Datos Abiertos" }} ({{ mtpe_historico.fuente.get_tipo_display|default:"Oficial del Estado" }}){% if mtpe_historico.fecha_inicio and mtpe_historico.fecha_fin %} · Periodo registrado: {{ mtpe_historico.fecha_inicio|date:"d/m/Y" }} al {{ mtpe_historico.fecha_fin|date:"d/m/Y" }}{% endif %}.
+                </p>
+            </div>
+        </header>
+
+        <dl class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-slate-200 bg-white p-5">
+                <dt class="text-sm font-medium text-slate-600">Avisos históricos MTPE</dt>
+                <dd class="mt-2 text-3xl font-bold tabular-nums text-slate-950">{{ mtpe_historico.total_avisos }}</dd>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white p-5">
+                <dt class="text-sm font-medium text-slate-600">Vacantes históricas registradas</dt>
+                <dd class="mt-2 text-3xl font-bold tabular-nums text-slate-950">{{ mtpe_historico.total_vacantes }}</dd>
+            </div>
+        </dl>
+
+        <div class="mt-6 grid gap-5 lg:grid-cols-2">
+            <article class="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 class="text-base font-bold text-slate-950">Demanda histórica por departamento</h3>
+                <ul class="mt-3 divide-y divide-slate-100 text-sm">
+                    {% for item in mtpe_historico.regiones %}
+                    <li class="flex items-center justify-between py-2">
+                        <span class="font-medium text-slate-800">{{ item.nombre }}</span>
+                        <span class="text-slate-600">{{ item.total_vacantes }} vacantes ({{ item.total_avisos }} avisos)</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+            <article class="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 class="text-base font-bold text-slate-950">Sectores económicos con mayor demanda</h3>
+                {% if mtpe_historico.sectores %}
+                <ul class="mt-3 divide-y divide-slate-100 text-sm">
+                    {% for item in mtpe_historico.sectores %}
+                    <li class="flex items-center justify-between py-2">
+                        <span class="font-medium text-slate-800">{{ item.sector }}</span>
+                        <span class="text-slate-600">{{ item.total_vacantes }} vacantes</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mt-3 text-sm text-slate-500">Sin sectores registrados en este corte.</p>
+                {% endif %}
+            </article>
+
+            <article class="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 class="text-base font-bold text-slate-950">Ocupaciones más solicitadas (ESCO)</h3>
+                {% if mtpe_historico.ocupaciones %}
+                <ul class="mt-3 divide-y divide-slate-100 text-sm">
+                    {% for item in mtpe_historico.ocupaciones %}
+                    <li class="flex items-center justify-between gap-3 py-2">
+                        <span class="font-medium text-slate-800">{{ item.ocupacion }}</span>
+                        <span class="shrink-0 text-slate-600">{{ item.total_vacantes }} vacantes</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mt-3 text-sm text-slate-500">Sin ocupaciones ESCO registradas en este corte.</p>
+                {% endif %}
+            </article>
+
+            <article class="rounded-xl border border-slate-200 bg-white p-5">
+                <h3 class="text-base font-bold text-slate-950">Top competencias asociadas (MTPE)</h3>
+                {% if mtpe_historico.competencias %}
+                <ul class="mt-3 divide-y divide-slate-100 text-sm">
+                    {% for item in mtpe_historico.competencias %}
+                    <li class="flex items-center justify-between gap-3 py-2">
+                        <span class="font-medium text-slate-800">{{ item.nombre }}</span>
+                        <span class="shrink-0 text-slate-600">{{ item.total }} avisos</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mt-3 text-sm text-slate-500">Sin competencias asociadas en este corte.</p>
+                {% endif %}
+            </article>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if ong_indicadores %}
+    <section aria-labelledby="ong-empleabilidad-titulo" class="mt-12 border-t border-slate-200 pt-10">
+        <header class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
+                    Fuente ONG · Indicadores de Empleabilidad (No mezclados con vacantes)
+                </span>
+                <h2 id="ong-empleabilidad-titulo" class="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+                    Tendencias y brechas de empleabilidad ({{ ong_indicadores.fuente.nombre }} · {{ ong_indicadores.anio }})
+                </h2>
+                <p class="mt-1 text-sm text-slate-600">
+                    Tipo de fuente: {{ ong_indicadores.fuente.get_tipo_display }} · Alcance regional declarado en cada indicador.
+                </p>
+            </div>
+            <a href="{{ ong_indicadores.url_documento }}" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">
+                Ver informe oficial (PDF)
+            </a>
+        </header>
+
+        <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {% for ind in ong_indicadores.indicadores %}
+            <article class="flex flex-col rounded-xl border border-slate-200 bg-white p-5">
+                <span class="text-xs font-semibold uppercase tracking-wide text-emerald-700">{{ ind.get_categoria_display }}</span>
+                <h3 class="mt-1 text-base font-bold text-slate-950">{{ ind.titulo }}</h3>
+                <p class="mt-2 text-3xl font-bold tabular-nums text-slate-950">
+                    {{ ind.valor_numerico|floatformat:"-2" }}{% if ind.unidad == '%' %}%{% else %} <span class="text-sm font-medium text-slate-600">{{ ind.unidad }}</span>{% endif %}
+                </p>
+                <p class="mt-1 text-xs font-medium text-slate-500">Ámbito: {{ ind.ambito }}</p>
+                <p class="mt-3 text-sm text-slate-600">{{ ind.descripcion }}</p>
+                {% if ind.competencias.all %}
+                <div class="mt-auto flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                    {% for comp in ind.competencias.all %}
+                    <span class="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800">{{ comp.nombre }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </section>
 {% endblock %}
 
