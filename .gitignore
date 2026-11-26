@@ -1,18 +1,31 @@
-
 # Archivos temporales de Python
 __pycache__/
 *.py[cod]
+*$py.class
+
+# Base de datos local (¡IMPORTANTE!)
+db.sqlite3
+db.sqlite3-journal
 
 # Entorno virtual
 venv/
 .venv/
+env/
 
 # Variables de entorno y secretos
 .env
 .env.*
 
-# Archivos locales de configuración
+# Archivos locales de configuración y logs
 *.log
+local_settings.py
+
+# Archivos estáticos recopilados (cuando usas collectstatic)
+/staticfiles/
+/static_root/
+
+# Archivos subidos por usuarios en desarrollo (opcional, si no quieres compartir imágenes locales)
+# /media/
 
 # Archivos temporales del sistema
 .DS_Store
@@ -21,4 +34,4 @@ Thumbs.db
 # Archivos de pruebas y cobertura
 .coverage
 htmlcov/
-/media
+.pytest_cache/
