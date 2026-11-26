@@ -128,3 +128,55 @@ class ScraperTestCase(TestCase):
         self.assertEqual(oferta.descripcion, 'Trabajo con Python')
         self.assertTrue(oferta.competencias.filter(nombre='Python').exists())
         self.assertContains(self.client.get('/dashboard/'), 'https://www.arbeitnow.com/')
+
+
+class AuthFrontendTestCase(TestCase):
+    def test_rutas_publicas_login_y_registro(self):
+        self.assertEqual(self.client.get('/login/').status_code, 200)
+        self.assertEqual(self.client.get('/registro/').status_code, 200)
+        respuesta = self.client.get('/subir-cv/')
+        self.assertRedirects(respuesta, '/login/?next=/subir-cv/')
+
+    def test_registro_exitoso_loguea_y_redirige_a_subir_cv(self):
+        respuesta = self.client.post('/registro/', {
+            'username': 'nuevo_usuario',
+            'email': 'nuevo@ejemplo.com',
+            'password1': 'ClaveSegura2026!',
+            'password2': 'ClaveSegura2026!',
+        })
+        self.assertRedirects(respuesta, '/subir-cv/')
+        usuario = User.objects.get(username='nuevo_usuario')
+        self.assertEqual(usuario.email, 'nuevo@ejemplo.com')
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def test_registro_contrasenas_distintas_muestra_error(self):
+        respuesta = self.client.post('/registro/', {
+            'username': 'otro_usuario',
+            'email': 'otro@ejemplo.com',
+            'password1': 'ClaveSegura2026!',
+            'password2': 'Diferente2026!',
+        })
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(User.objects.filter(username='otro_usuario').exists())
+        self.assertTrue(respuesta.context['form'].errors)
+
+    def test_login_logout_y_navbar_condicional(self):
+        User.objects.create_user(username='ana', password='ClaveSegura2026!')
+        anon = self.client.get('/')
+        self.assertContains(anon, 'Iniciar Sesión')
+        self.assertContains(anon, 'Registrarse')
+        self.assertNotContains(anon, 'Cerrar Sesión')
+
+        login_resp = self.client.post('/login/', {
+            'username': 'ana',
+            'password': 'ClaveSegura2026!',
+        })
+        self.assertRedirects(login_resp, '/')
+
+        auth = self.client.get('/')
+        self.assertContains(auth, 'Mi Perfil')
+        self.assertContains(auth, 'Cerrar Sesión')
+        self.assertNotContains(auth, 'Iniciar Sesión')
+
+        logout_resp = self.client.post('/logout/')
+        self.assertRedirects(logout_resp, '/')

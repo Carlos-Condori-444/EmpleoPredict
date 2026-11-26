@@ -67,8 +67,9 @@ TEMPLATES = [
     },
 ]
 
-LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/subir-cv/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
