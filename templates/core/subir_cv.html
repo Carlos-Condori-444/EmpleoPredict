@@ -5,15 +5,38 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
     <!-- Encabezado de la página -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900 flex items-center space-x-3">
-            <i class="fa-solid fa-file-invoice text-indigo-600"></i>
-            <span>Módulo de Carga y Extracción de CV</span>
-        </h1>
-        <p class="text-slate-600 mt-1">
-            Sube tu currículum en formato PDF para que el motor inteligente extraiga tu información personal y detecte tus competencias.
-        </p>
+    <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center space-x-3">
+                <i class="fa-solid fa-file-invoice text-indigo-600"></i>
+                <span>Módulo de Carga y Extracción de CV</span>
+            </h1>
+            <p class="text-slate-600 mt-1">
+                Sube tu currículum en formato PDF para que el motor inteligente extraiga tu información personal y detecte tus competencias.
+            </p>
+        </div>
+        <a href="{% url 'perfil' %}" class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
+            <i class="fa-solid fa-user-pen" aria-hidden="true"></i>
+            <span>Ir a Mi Perfil</span>
+        </a>
     </div>
+
+    {% if datos_faltantes %}
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 text-lg text-amber-600" aria-hidden="true"></i>
+                <div>
+                    <p class="font-semibold">Información básica pendiente en tu perfil</p>
+                    <p class="mt-0.5 text-xs text-amber-800">
+                        Te falta completar: <strong>{{ datos_faltantes|join:", " }}</strong>.
+                    </p>
+                </div>
+            </div>
+            <a href="{% url 'perfil' %}" class="rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-amber-700">
+                Completar en Mi Perfil
+            </a>
+        </div>
+    {% endif %}
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -66,12 +89,23 @@
                                     <th class="px-3 py-2 text-left font-semibold text-slate-600">Versión</th>
                                     <th class="px-3 py-2 text-left font-semibold text-slate-600">Estado</th>
                                     <th class="px-3 py-2 text-left font-semibold text-slate-600">Fecha</th>
+                                    <th class="px-3 py-2 text-right font-semibold text-slate-600">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 {% for doc in documentos %}
                                 <tr>
-                                    <td class="px-3 py-2 font-medium text-slate-800">{{ doc.nombre_archivo }}</td>
+                                    <td class="px-3 py-2 font-medium text-slate-800">
+                                        <div>{{ doc.nombre_archivo }}</div>
+                                        <details class="mt-1">
+                                            <summary class="cursor-pointer text-xs font-normal text-indigo-600 hover:underline">Renombrar</summary>
+                                            <form method="post" action="{% url 'editar_cv' doc.pk %}" class="mt-2 flex items-center gap-2">
+                                                {% csrf_token %}
+                                                <input type="text" name="nombre_archivo" value="{{ doc.nombre_archivo }}" required class="w-44 rounded border border-slate-300 px-2 py-1 text-xs text-slate-800">
+                                                <button type="submit" class="rounded bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-indigo-700">Guardar</button>
+                                            </form>
+                                        </details>
+                                    </td>
                                     <td class="px-3 py-2 text-slate-500">v{{ doc.version }}</td>
                                     <td class="px-3 py-2">
                                         {% if doc.estado_procesamiento == 'PROCESADO' %}
@@ -89,6 +123,27 @@
                                         {% endif %}
                                     </td>
                                     <td class="px-3 py-2 text-slate-400 text-xs">{{ doc.fecha_subida|date:"d/m/Y H:i" }}</td>
+                                    <td class="px-3 py-2 text-right">
+                                        <div class="inline-flex items-center gap-1.5">
+                                            {% if doc.archivo %}
+                                                <a href="{{ doc.archivo.url }}" target="_blank" title="Ver PDF" class="rounded p-1.5 text-slate-600 hover:bg-slate-100 hover:text-indigo-600">
+                                                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                                </a>
+                                            {% endif %}
+                                            <form method="post" action="{% url 'reprocesar_cv' doc.pk %}" class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit" title="Reprocesar CV" class="rounded p-1.5 text-indigo-600 hover:bg-indigo-50">
+                                                    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'eliminar_cv' doc.pk %}" class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit" title="Eliminar CV" class="rounded p-1.5 text-rose-600 hover:bg-rose-50">
+                                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

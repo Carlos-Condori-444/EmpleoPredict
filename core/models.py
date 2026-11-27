@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -29,7 +30,12 @@ class PerfilProfesional(models.Model):
     titulo_profesional = models.CharField(max_length=150, blank=True)
     resumen_profesional = models.TextField(blank=True)
     area_profesional = models.CharField(max_length=120, blank=True)
-    anios_experiencia = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    anios_experiencia = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
     puesto_objetivo = models.CharField(max_length=150, blank=True)
     modalidad_preferida = models.CharField(max_length=30, blank=True)
     disponibilidad = models.CharField(max_length=50, blank=True)
@@ -93,7 +99,13 @@ class UsuarioCompetencia(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competencias')
     competencia = models.ForeignKey(Competencia, on_delete=models.CASCADE)
     nivel = models.CharField(max_length=20, choices=NIVEL_CHOICES, default='BASICO')
-    anios_experiencia = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    anios_experiencia = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+    )
     evidencia = models.TextField(blank=True) # Ej: "Certificado de Python"
 
     class Meta:

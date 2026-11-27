@@ -161,7 +161,7 @@ class AuthFrontendTestCase(TestCase):
         self.assertTrue(respuesta.context['form'].errors)
 
     def test_login_logout_y_navbar_condicional(self):
-        User.objects.create_user(username='ana', password='ClaveSegura2026!')
+        User.objects.create_user(username='ana', email='ana@ejemplo.com', password='ClaveSegura2026!')
         anon = self.client.get('/')
         self.assertContains(anon, 'Iniciar Sesión')
         self.assertContains(anon, 'Registrarse')
@@ -180,3 +180,9 @@ class AuthFrontendTestCase(TestCase):
 
         logout_resp = self.client.post('/logout/')
         self.assertRedirects(logout_resp, '/')
+
+        login_email_resp = self.client.post('/login/', {
+            'username': 'ana@ejemplo.com',
+            'password': 'ClaveSegura2026!',
+        })
+        self.assertRedirects(login_email_resp, '/')
