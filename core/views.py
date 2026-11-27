@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.db import transaction
 from django.db.models import Count, Q, Value
 from django.db.models.functions import Coalesce, NullIf
 from django.utils import timezone
@@ -20,6 +21,7 @@ from .forms import (
     LoginForm,
     PerfilProfesionalForm,
     RegistroForm,
+    ReservaForm,
     SubirCVForm,
     UsuarioCompetenciaEditarForm,
     UsuarioCompetenciaForm,
@@ -382,6 +384,7 @@ def dashboard_view(request):
             'competencias': competencias,
             'regiones': regiones,
             'incluye_arbeitnow': OfertaLaboral.objects.filter(fuente__nombre='Arbeitnow').exists(),
+            'servicios_categoria_filtro': next(iter(_mapear_categorias_servicio(categorias_usuario)), ''),
         })
 
     totales = (OfertaLaboral.objects.count(), Competencia.objects.count(), get_user_model().objects.count())
@@ -428,16 +431,287 @@ def recomendar_ofertas_view(request):
     return redirect('dashboard')
 
 
+MAPA_CAT_SERVICIO = {
+    'Legal': 'DERECHO',
+    'Gestión y Oficina': 'ADMINISTRACION',
+    'Gestión': 'ADMINISTRACION',
+    'Gestión de Proyectos': 'ADMINISTRACION',
+    'Finanzas': 'CONTABILIDAD',
+    'Educación': 'EDUCACION',
+    'Salud': 'SALUD',
+    'Ingeniería': 'INGENIERIA',
+    'Tecnología': 'TECNOLOGIA',
+    'Marketing': 'MARKETING',
+    'Arte y Medios': 'MARKETING',
+    'Comercial': 'OFICIOS',
+    'Oficios': 'OFICIOS',
+    'Gastronomía': 'OFICIOS',
+    'Logística': 'OFICIOS',
+    'Construcción': 'OFICIOS',
+    'Agricultura': 'OFICIOS',
+}
+
+
+def _mapear_categorias_servicio(categorias_usuario):
+    return {MAPA_CAT_SERVICIO[c] for c in categorias_usuario if c in MAPA_CAT_SERVICIO}
+
+
+def _recomendar_servicios_para_usuario(usuario, servicios_activos):
+    perfil_profesional, _ = PerfilProfesional.objects.get_or_create(usuario=usuario)
+    mis_competencias = list(
+        UsuarioCompetencia.objects.filter(usuario=usuario).select_related('competencia')
+    )
+    mis_comp_set = {uc.competencia_id for uc in mis_competencias}
+    categorias_usuario = _obtener_categorias_usuario(perfil_profesional, mis_competencias)
+    categorias_servicio = _mapear_categorias_servicio(categorias_usuario)
+
+    terminos = obtener_terminos_busqueda_usuario(usuario)
+    filtro_ofertas = Q()
+    for termino in terminos:
+        filtro_ofertas |= (
+            Q(titulo__icontains=termino)
+            | Q(descripcion__icontains=termino)
+            | Q(sector__icontains=termino)
+        )
+    brechas_ids = set()
+    if filtro_ofertas:
+        fecha_limite = timezone.now() - timedelta(days=30)
+        ofertas_ids = list(
+            OfertaLaboral.objects.filter(filtro_ofertas)
+            .filter(
+                Q(fecha_publicacion__gte=fecha_limite)
+                | Q(fecha_publicacion__isnull=True, fecha_extraccion__gte=fecha_limite)
+            )
+            .values_list('id', flat=True)
+        )
+        if ofertas_ids:
+            candidatas = (
+                Competencia.objects.filter(ofertas__id__in=ofertas_ids)
+                .annotate(total=Count('ofertas', filter=Q(ofertas__id__in=ofertas_ids), distinct=True))
+                .order_by('-total')
+            )
+            brechas_ids = {
+                c.id for c in candidatas
+                if c.id not in mis_comp_set and _competencia_pertinente_al_sector(c, categorias_usuario)
+            }
+
+    recomendados = []
+    for servicio in servicios_activos:
+        comps_servicio = list(servicio.competencias.all())
+        cubre_brechas = [c.nombre for c in comps_servicio if c.id in brechas_ids]
+        ya_posee = [c.nombre for c in comps_servicio if c.id in mis_comp_set]
+        es_transversal = any(
+            c.nombre.strip().lower() in COMPETENCIAS_TRANSVERSALES or c.categoria in CATEGORIAS_TRANSVERSALES
+            for c in comps_servicio
+        )
+        pertenece_sector = (
+            not categorias_servicio
+            or servicio.categoria in categorias_servicio
+            or servicio.categoria == 'EMPLEABILIDAD'
+            or es_transversal
+        )
+        if not pertenece_sector and not cubre_brechas:
+            continue
+
+        puntaje = len(cubre_brechas) * 3
+        if servicio.categoria in categorias_servicio:
+            puntaje += 2
+        elif servicio.categoria == 'EMPLEABILIDAD' or es_transversal:
+            puntaje += 1
+
+        if puntaje > 0:
+            recomendados.append({
+                'servicio': servicio,
+                'puntaje': puntaje,
+                'cubre_brechas': cubre_brechas,
+                'ya_posee': ya_posee,
+            })
+
+    recomendados.sort(key=lambda item: (-item['puntaje'], item['servicio'].precio, item['servicio'].nombre))
+    return recomendados[:6]
+
+
 def servicios_view(request):
-    servicios = list(ServicioCapacitacion.objects.order_by('nombre', 'pk'))
-    demo = not servicios
+    q = (request.GET.get('q') or '').strip()
+    categoria = (request.GET.get('categoria') or '').strip()
+    precio_filtro = (request.GET.get('precio') or '').strip()
+    modalidad = (request.GET.get('modalidad') or '').strip()
+    solo_certificado = request.GET.get('certificado') == '1'
+    hay_filtros = any([q, categoria, precio_filtro, modalidad, solo_certificado])
+
+    base_qs = ServicioCapacitacion.objects.filter(activo=True).prefetch_related('competencias').order_by('nombre', 'pk')
+    servicios_activos = list(base_qs)
+    demo = (not servicios_activos) and (not hay_filtros)
+
     if demo:
-        servicios = [
+        servicios_filtrados = [
             {'nombre': 'Excel para el trabajo', 'descripcion': 'Practica fórmulas, filtros y tablas dinámicas con ejercicios de oficina.', 'precio': 35, 'capacidad_maxima': 25},
             {'nombre': 'Introducción a Python', 'descripcion': 'Escribe tus primeros programas y automatiza tareas sencillas.', 'precio': 50, 'capacidad_maxima': 20},
             {'nombre': 'Asesoría de CV', 'descripcion': 'Identifica mejoras para presentar tu experiencia y tus competencias.', 'precio': 25, 'capacidad_maxima': 8},
         ]
-    return render(request, 'core/servicios.html', {'servicios': servicios, 'demo': demo})
+        servicios_recomendados = []
+    else:
+        qs = base_qs
+        if q:
+            qs = qs.filter(
+                Q(nombre__icontains=q)
+                | Q(descripcion__icontains=q)
+                | Q(proveedor__icontains=q)
+                | Q(competencias__nombre__icontains=q)
+            ).distinct()
+        if categoria:
+            qs = qs.filter(categoria=categoria)
+        if precio_filtro == 'gratis':
+            qs = qs.filter(precio=0)
+        elif precio_filtro == 'pago':
+            qs = qs.filter(precio__gt=0)
+        if modalidad:
+            qs = qs.filter(modalidad=modalidad)
+        if solo_certificado:
+            qs = qs.filter(otorga_certificado=True)
+
+        servicios_filtrados = list(qs)
+        servicios_recomendados = (
+            _recomendar_servicios_para_usuario(request.user, servicios_activos)
+            if request.user.is_authenticated else []
+        )
+
+    reservas_activas_count = (
+        Reserva.objects.filter(usuario=request.user).exclude(estado='Cancelada').count()
+        if request.user.is_authenticated else 0
+    )
+
+    return render(request, 'core/servicios.html', {
+        'servicios': servicios_filtrados,
+        'servicios_recomendados': servicios_recomendados,
+        'demo': demo,
+        'hay_filtros': hay_filtros,
+        'q': q,
+        'categoria_actual': categoria,
+        'precio_actual': precio_filtro,
+        'modalidad_actual': modalidad,
+        'solo_certificado': solo_certificado,
+        'categorias_choices': ServicioCapacitacion.CATEGORIA_CHOICES,
+        'modalidades_choices': ServicioCapacitacion.MODALIDAD_CHOICES,
+        'reservas_activas_count': reservas_activas_count,
+    })
+
+
+def servicio_detalle_view(request, pk):
+    servicio = get_object_or_404(
+        ServicioCapacitacion.objects.prefetch_related('competencias'),
+        pk=pk,
+        activo=True,
+    )
+    reserva_activa = None
+    form = None
+    competencias_posee = []
+    competencias_reforzar = []
+
+    if request.user.is_authenticated:
+        mis_comp_set = set(
+            UsuarioCompetencia.objects.filter(usuario=request.user).values_list('competencia_id', flat=True)
+        )
+        for comp in servicio.competencias.all():
+            if comp.id in mis_comp_set:
+                competencias_posee.append(comp.nombre)
+            else:
+                competencias_reforzar.append(comp.nombre)
+
+        if not servicio.es_externo:
+            reserva_activa = (
+                Reserva.objects.filter(usuario=request.user, servicio=servicio)
+                .exclude(estado='Cancelada')
+                .first()
+            )
+            fecha_sugerida = servicio.fecha_inicio
+            if not fecha_sugerida or fecha_sugerida < timezone.now():
+                fecha_sugerida = (timezone.now() + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
+            form = ReservaForm(initial={'fecha_reserva': fecha_sugerida})
+    else:
+        competencias_reforzar = [c.nombre for c in servicio.competencias.all()]
+
+    return render(request, 'core/servicio_detalle.html', {
+        'servicio': servicio,
+        'reserva_activa': reserva_activa,
+        'form': form,
+        'competencias_posee': competencias_posee,
+        'competencias_reforzar': competencias_reforzar,
+    })
+
+
+@login_required
+@require_POST
+def reservar_servicio_view(request, pk):
+    with transaction.atomic():
+        servicio = get_object_or_404(
+            ServicioCapacitacion.objects.select_for_update(),
+            pk=pk,
+            activo=True,
+        )
+        if servicio.es_externo:
+            messages.error(
+                request,
+                'Los cursos gratuitos de plataformas externas se realizan directamente en su sitio oficial.',
+            )
+            return redirect('servicio_detalle', pk=servicio.pk)
+
+        if Reserva.objects.filter(usuario=request.user, servicio=servicio).exclude(estado='Cancelada').exists():
+            messages.warning(request, 'Ya tienes una reserva activa para esta capacitación.')
+            return redirect('mis_reservas')
+
+        if servicio.cupos_disponibles <= 0:
+            messages.error(request, 'Lo sentimos, ya no quedan cupos disponibles para esta capacitación.')
+            return redirect('servicio_detalle', pk=servicio.pk)
+
+        form = ReservaForm(request.POST)
+        if not form.is_valid():
+            error_msg = form.errors.get('fecha_reserva', ['Revisa la fecha y hora de reserva.'])[0]
+            messages.error(request, error_msg)
+            return redirect('servicio_detalle', pk=servicio.pk)
+
+        Reserva.objects.create(
+            usuario=request.user,
+            servicio=servicio,
+            fecha_reserva=form.cleaned_data['fecha_reserva'],
+            estado='Pendiente',
+        )
+
+    messages.success(request, f'Reserva registrada para "{servicio.nombre}".')
+    return redirect('mis_reservas')
+
+
+@login_required
+def mis_reservas_view(request):
+    reservas = (
+        Reserva.objects.filter(usuario=request.user)
+        .select_related('servicio')
+        .order_by('-fecha_creacion')
+    )
+    return render(request, 'core/mis_reservas.html', {'reservas': reservas})
+
+
+@login_required
+@require_POST
+def cancelar_reserva_view(request, pk):
+    with transaction.atomic():
+        reserva = get_object_or_404(
+            Reserva.objects.select_for_update(),
+            pk=pk,
+            usuario=request.user,
+        )
+        if reserva.estado == 'Cancelada':
+            messages.info(request, 'Esta reserva ya había sido cancelada.')
+        elif not reserva.puede_cancelarse:
+            messages.error(request, 'No es posible cancelar una reserva cuya fecha ya pasó.')
+        else:
+            reserva.estado = 'Cancelada'
+            reserva.save(update_fields=['estado'])
+            messages.success(
+                request,
+                f'Reserva para "{reserva.servicio.nombre}" cancelada. El cupo fue liberado.',
+            )
+    return redirect('mis_reservas')
 
 
 @login_required

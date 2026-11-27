@@ -4,16 +4,24 @@ import requests
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 from django.contrib.auth.models import User
-from core.models import Competencia, FuenteDato, OfertaLaboral, ServicioCapacitacion
+from core.models import Competencia, FuenteDato, OfertaLaboral, ServicioCapacitacion, UsuarioCompetencia
 from core.forms import SubirCVForm
 from core.scraper import scrapear_computrabajo
-from core.utils import extraer_datos_contacto, extraer_competencias_del_texto, poblar_catalogo_competencias
+from core.utils import extraer_datos_contacto, extraer_competencias_del_texto
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 class ModuloCVTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='password123')
-        poblar_catalogo_competencias()
+        for nombre, tipo in [
+            ('Python', 'TECNICA'),
+            ('Django', 'TECNICA'),
+            ('SQL', 'TECNICA'),
+            ('Git', 'TECNICA'),
+            ('Liderazgo', 'BLANDA'),
+            ('Trabajo en Equipo', 'BLANDA'),
+        ]:
+            Competencia.objects.get_or_create(nombre=nombre, defaults={'tipo': tipo})
 
     def test_extraccion_datos_contacto(self):
         texto_muestra = """
@@ -53,17 +61,20 @@ class ModuloCVTestCase(TestCase):
 
 class DashboardServiciosTestCase(TestCase):
     def test_dashboard_resume_las_ofertas_y_mantiene_la_demo_separada(self):
+        usuario = User.objects.create_user(username='dash_user', password='password123')
         fuente = FuenteDato.objects.create(nombre='Prueba', url_base='https://example.com')
         oferta = OfertaLaboral.objects.create(titulo='Desarrollo', region='Lima', fuente=fuente)
         python = Competencia.objects.create(nombre='Python', tipo='TECNICA')
         oferta.competencias.add(python)
+        UsuarioCompetencia.objects.create(usuario=usuario, competencia=python, nivel='INTERMEDIO')
         OfertaLaboral.objects.create(titulo='Soporte', fuente=fuente)
 
+        self.client.force_login(usuario)
         respuesta = self.client.get('/dashboard/')
         self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.context['estadisticas'][0]['total'], 2)
-        self.assertEqual(respuesta.context['competencias'], [{'nombre': 'Python', 'total': 1}])
-        self.assertIn({'nombre': 'Sin región', 'total': 1}, respuesta.context['regiones'])
+        self.assertEqual(respuesta.context['estadisticas'][1]['total'], 1)
+        self.assertEqual(respuesta.context['competencias'], [{'nombre': 'Python', 'total': 1, 'tengo': True}])
+        self.assertIn({'nombre': 'Lima', 'total': 1}, respuesta.context['regiones'])
         self.assertContains(self.client.get('/dashboard/?demo=1'), 'Las cifras y gráficos de esta vista son ficticios')
 
     def test_catalogo_muestra_servicios_y_reserva_inactiva(self):
@@ -76,6 +87,9 @@ class DashboardServiciosTestCase(TestCase):
 
 
 class ScraperTestCase(TestCase):
+    def setUp(self):
+        Competencia.objects.get_or_create(nombre='Python', defaults={'tipo': 'TECNICA'})
+
     def test_importa_y_deduplica_por_region(self):
         html = """
         <article class="box_offer">
@@ -127,6 +141,8 @@ class ScraperTestCase(TestCase):
         self.assertEqual(oferta.region, 'Berlin')
         self.assertEqual(oferta.descripcion, 'Trabajo con Python')
         self.assertTrue(oferta.competencias.filter(nombre='Python').exists())
+        usuario = User.objects.create_user(username='arb_user', password='password123')
+        self.client.force_login(usuario)
         self.assertContains(self.client.get('/dashboard/'), 'https://www.arbeitnow.com/')
 
 

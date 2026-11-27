@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from .models import (
     Competencia,
@@ -9,6 +10,7 @@ from .models import (
     ExperienciaLaboral,
     FormacionAcademica,
     PerfilProfesional,
+    Reserva,
     UsuarioCompetencia,
 )
 
@@ -322,3 +324,33 @@ class DocumentoCVEditarForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _aplicar_estilos_tailwind(self)
+
+
+class ReservaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = ['fecha_reserva']
+        labels = {
+            'fecha_reserva': 'Fecha y hora deseada',
+        }
+        widgets = {
+            'fecha_reserva': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_reserva'].input_formats = [
+            '%Y-%m-%dT%H:%M',
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M',
+        ]
+        _aplicar_estilos_tailwind(self)
+
+    def clean_fecha_reserva(self):
+        fecha = self.cleaned_data.get('fecha_reserva')
+        if fecha and fecha < timezone.now():
+            raise forms.ValidationError('La fecha y hora de reserva no pueden estar en el pasado.')
+        return fecha
