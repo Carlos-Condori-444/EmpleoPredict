@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 # ==========================================
 # MÓDULO DE PERFIL (Universal para cualquier carrera)
@@ -174,13 +175,55 @@ class OfertaLaboral(models.Model):
 # ==========================================
 
 class ServicioCapacitacion(models.Model):
+    CATEGORIA_CHOICES = [
+        ('DERECHO', 'Derecho y ciencias jurídicas'),
+        ('ADMINISTRACION', 'Administración y gestión empresarial'),
+        ('CONTABILIDAD', 'Contabilidad y finanzas'),
+        ('EDUCACION', 'Educación'),
+        ('SALUD', 'Salud'),
+        ('INGENIERIA', 'Ingeniería'),
+        ('TECNOLOGIA', 'Sistemas y tecnología'),
+        ('MARKETING', 'Marketing y comunicaciones'),
+        ('OFICIOS', 'Oficios y habilidades prácticas'),
+        ('EMPLEABILIDAD', 'Empleabilidad y desarrollo profesional'),
+    ]
+    MODALIDAD_CHOICES = [
+        ('VIRTUAL', 'Virtual'),
+        ('EN_VIVO', 'En vivo'),
+        ('PRESENCIAL', 'Presencial'),
+    ]
+
     nombre = models.CharField(max_length=150)
     descripcion = models.TextField()
-    capacidad_maxima = models.IntegerField(default=30)
-    precio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, default='EMPLEABILIDAD')
+    proveedor = models.CharField(max_length=150, default='EmpleoPredict')
+    duracion = models.CharField(max_length=80, blank=True)
+    modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES, default='VIRTUAL')
+    fecha_inicio = models.DateTimeField(null=True, blank=True)
+    capacidad_maxima = models.IntegerField(default=30, validators=[MinValueValidator(1)])
+    precio = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, validators=[MinValueValidator(0)])
+    otorga_certificado = models.BooleanField(default=False)
+    es_externo = models.BooleanField(default=False)
+    url_externa = models.URLField(max_length=500, blank=True, null=True)
+    activo = models.BooleanField(default=True)
+    competencias = models.ManyToManyField(Competencia, related_name='servicios', blank=True)
 
     def __str__(self):
         return self.nombre
+
+    @property
+    def es_gratuito(self):
+        return self.precio == 0
+
+    @property
+    def reservas_activas_count(self):
+        return self.reserva_set.exclude(estado='Cancelada').count()
+
+    @property
+    def cupos_disponibles(self):
+        if self.es_externo:
+            return None
+        return max(self.capacidad_maxima - self.reservas_activas_count, 0)
 
 class Reserva(models.Model):
     ESTADO_CHOICES = [
@@ -196,6 +239,12 @@ class Reserva(models.Model):
 
     def __str__(self):
         return f"Reserva de {self.usuario.username} para {self.servicio.nombre}"
+
+    @property
+    def puede_cancelarse(self):
+        if self.estado == 'Cancelada':
+            return False
+        return self.fecha_reserva >= timezone.now()
 
 # ==========================================
 # SEÑALES (Crear perfil vacío al registrar usuario)

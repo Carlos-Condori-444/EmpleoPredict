@@ -21,4 +21,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/recomendar/', views.recomendar_ofertas_view, name='recomendar_ofertas'),
     path('servicios/', views.servicios_view, name='servicios'),
+    path('servicios/<int:pk>/', views.servicio_detalle_view, name='servicio_detalle'),
+    path('servicios/<int:pk>/reservar/', views.reservar_servicio_view, name='reservar_servicio'),
+    path('mis-reservas/', views.mis_reservas_view, name='mis_reservas'),
+    path('mis-reservas/<int:pk>/cancelar/', views.cancelar_reserva_view, name='cancelar_reserva'),
 ]

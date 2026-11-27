@@ -77,8 +77,13 @@ class OfertaLaboralAdmin(admin.ModelAdmin):
 
 @admin.register(ServicioCapacitacion)
 class ServicioCapacitacionAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'capacidad_maxima', 'precio')
-    search_fields = ('nombre',)
+    list_display = (
+        'nombre', 'categoria', 'proveedor', 'modalidad',
+        'precio', 'capacidad_maxima', 'otorga_certificado', 'es_externo', 'activo',
+    )
+    list_filter = ('categoria', 'modalidad', 'otorga_certificado', 'es_externo', 'activo')
+    search_fields = ('nombre', 'descripcion', 'proveedor')
+    filter_horizontal = ('competencias',)
 
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
