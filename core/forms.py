@@ -12,11 +12,20 @@ TAILWIND_INPUT_CLASS = (
 
 
 class LoginForm(AuthenticationForm):
+    error_messages = {
+        'invalid_login': (
+            'Usuario, correo o contraseña incorrectos. '
+            'Verifica tus datos (recuerda respetar mayúsculas y minúsculas).'
+        ),
+        'inactive': 'Esta cuenta se encuentra inactiva.',
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Usuario o correo electrónico'
         self.fields['username'].widget.attrs.update({
             'class': TAILWIND_INPUT_CLASS,
-            'placeholder': 'Tu nombre de usuario',
+            'placeholder': 'Usuario o correo@ejemplo.com',
             'autocomplete': 'username',
         })
         self.fields['password'].widget.attrs.update({
@@ -24,6 +33,22 @@ class LoginForm(AuthenticationForm):
             'placeholder': 'Tu contraseña',
             'autocomplete': 'current-password',
         })
+
+    def clean(self):
+        identificador = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if identificador and password and not User.objects.filter(username=identificador).exists():
+            candidatos = User.objects.filter(email__iexact=identificador)
+            for candidato in candidatos:
+                if candidato.check_password(password):
+                    self.cleaned_data['username'] = candidato.username
+                    break
+            else:
+                if candidatos.count() == 1:
+                    self.cleaned_data['username'] = candidatos.first().username
+
+        return super().clean()
 
 
 class RegistroForm(UserCreationForm):
