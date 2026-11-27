@@ -25,7 +25,7 @@ local_settings.py
 /static_root/
 
 # Archivos subidos por usuarios en desarrollo (opcional, si no quieres compartir imágenes locales)
-# /media/
+/media/
 
 # Archivos temporales del sistema
 .DS_Store

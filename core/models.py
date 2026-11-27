@@ -11,6 +11,7 @@ class DatosPersonales(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='datos_personales')
     nombres = models.CharField(max_length=100)
     apellidos = models.CharField(max_length=100)
+    email_contacto = models.EmailField(blank=True, null=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
     pais = models.CharField(max_length=80, blank=True)
