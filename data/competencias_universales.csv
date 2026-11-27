@@ -1,0 +1,277 @@
+nombre,tipo,categoria
+Python,TECNICA,Tecnología
+Java,TECNICA,Tecnología
+JavaScript,TECNICA,Tecnología
+TypeScript,TECNICA,Tecnología
+C Sharp,TECNICA,Tecnología
+PHP,TECNICA,Tecnología
+Go,TECNICA,Tecnología
+Rust,TECNICA,Tecnología
+Kotlin,TECNICA,Tecnología
+Swift,TECNICA,Tecnología
+SQL,TECNICA,Tecnología
+Administración de Bases de Datos,TECNICA,Tecnología
+Modelado de Datos,TECNICA,Tecnología
+Administración de Servidores,TECNICA,Tecnología
+Linux,TECNICA,Tecnología
+Windows Server,TECNICA,Tecnología
+Redes Informáticas,TECNICA,Tecnología
+Ciberseguridad,TECNICA,Tecnología
+Análisis de Vulnerabilidades,TECNICA,Tecnología
+Pruebas de Penetración,TECNICA,Tecnología
+Computación en la Nube,TECNICA,Tecnología
+Azure,TECNICA,Tecnología
+AWS,TECNICA,Tecnología
+Google Cloud Platform,TECNICA,Tecnología
+Docker,TECNICA,Tecnología
+Kubernetes,TECNICA,Tecnología
+DevOps,TECNICA,Tecnología
+Integración Continua,TECNICA,Tecnología
+Entrega Continua,TECNICA,Tecnología
+Desarrollo Frontend,TECNICA,Tecnología
+Desarrollo Backend,TECNICA,Tecnología
+Desarrollo Full Stack,TECNICA,Tecnología
+React,TECNICA,Tecnología
+Angular,TECNICA,Tecnología
+Vue.js,TECNICA,Tecnología
+Machine Learning,TECNICA,Tecnología
+Deep Learning,TECNICA,Tecnología
+Procesamiento de Lenguaje Natural,TECNICA,Tecnología
+Inteligencia Artificial,TECNICA,Tecnología
+Análisis de Datos,TECNICA,Tecnología
+Power BI,TECNICA,Tecnología
+Tableau,TECNICA,Tecnología
+Excel Avanzado,TECNICA,Tecnología
+Visualización de Datos,TECNICA,Tecnología
+Minería de Datos,TECNICA,Tecnología
+Testing de Software,TECNICA,Tecnología
+Automatización de Pruebas,TECNICA,Tecnología
+Git,TECNICA,Tecnología
+Administración de APIs,TECNICA,Tecnología
+Arquitectura de Software,TECNICA,Tecnología
+Atención al Paciente,BLANDA,Salud
+Diagnóstico Clínico,TECNICA,Salud
+Historia Clínica,TECNICA,Salud
+Toma de Muestras,TECNICA,Salud
+Administración de Medicamentos,TECNICA,Salud
+Enfermería General,TECNICA,Salud
+Soporte Vital Básico,TECNICA,Salud
+Soporte Vital Avanzado,TECNICA,Salud
+Interpretación de Análisis Clínicos,TECNICA,Salud
+Radiología,TECNICA,Salud
+Ecografía,TECNICA,Salud
+Fisioterapia,TECNICA,Salud
+Rehabilitación Física,TECNICA,Salud
+Terapia Ocupacional,TECNICA,Salud
+Psicoterapia,TECNICA,Salud
+Evaluación Psicológica,TECNICA,Salud
+Odontología General,TECNICA,Salud
+Ortodoncia,TECNICA,Salud
+Farmacología,TECNICA,Salud
+Control de Infecciones,TECNICA,Salud
+Nutrición Clínica,TECNICA,Salud
+Atención Geriátrica,TECNICA,Salud
+Atención Pediátrica,TECNICA,Salud
+Urgencias Médicas,TECNICA,Salud
+Gestión Hospitalaria,TECNICA,Salud
+Preparación de Alimentos,TECNICA,Gastronomía
+Cocina Internacional,TECNICA,Gastronomía
+Cocina Peruana,TECNICA,Gastronomía
+Panadería,TECNICA,Gastronomía
+Pastelería,TECNICA,Gastronomía
+Repostería,TECNICA,Gastronomía
+Manipulación de Alimentos,TECNICA,Gastronomía
+Seguridad Alimentaria,TECNICA,Gastronomía
+Control de Costos de Cocina,TECNICA,Gastronomía
+Decoración de Platos,TECNICA,Gastronomía
+Parrilla y Asados,TECNICA,Gastronomía
+Cata de Vinos,TECNICA,Gastronomía
+Coctelería,TECNICA,Gastronomía
+Servicio de Mesa,TECNICA,Gastronomía
+Gestión de Restaurantes,TECNICA,Gastronomía
+Contabilidad General,TECNICA,Finanzas
+Contabilidad de Costos,TECNICA,Finanzas
+Auditoría Financiera,TECNICA,Finanzas
+Análisis Financiero,TECNICA,Finanzas
+Planeación Financiera,TECNICA,Finanzas
+Tesorería,TECNICA,Finanzas
+Gestión de Presupuestos,TECNICA,Finanzas
+Control Interno,TECNICA,Finanzas
+Tributación,TECNICA,Finanzas
+Declaración de Impuestos,TECNICA,Finanzas
+Gestión de Riesgos Financieros,TECNICA,Finanzas
+Valoración de Empresas,TECNICA,Finanzas
+Mercado de Capitales,TECNICA,Finanzas
+Banca Comercial,TECNICA,Finanzas
+Análisis de Créditos,TECNICA,Finanzas
+Redacción de Contratos,TECNICA,Legal
+Derecho Laboral,TECNICA,Legal
+Derecho Civil,TECNICA,Legal
+Derecho Penal,TECNICA,Legal
+Derecho Corporativo,TECNICA,Legal
+Cumplimiento Normativo,TECNICA,Legal
+Protección de Datos,TECNICA,Legal
+Investigación Jurídica,TECNICA,Legal
+Litigación,TECNICA,Legal
+Mediación y Conciliación,TECNICA,Legal
+Propiedad Intelectual,TECNICA,Legal
+Gestión Contractual,TECNICA,Legal
+Diseño Mecánico,TECNICA,Ingeniería
+Diseño Industrial,TECNICA,Ingeniería
+Diseño de Procesos,TECNICA,Ingeniería
+Ingeniería de Producción,TECNICA,Ingeniería
+Automatización Industrial,TECNICA,Ingeniería
+Programación PLC,TECNICA,Ingeniería
+Instrumentación Industrial,TECNICA,Ingeniería
+Control de Calidad,TECNICA,Ingeniería
+Metrología,TECNICA,Ingeniería
+CAD,TECNICA,Ingeniería
+AutoCAD,TECNICA,Ingeniería
+SolidWorks,TECNICA,Ingeniería
+Gestión de Proyectos de Ingeniería,TECNICA,Ingeniería
+Mantenimiento Industrial,TECNICA,Ingeniería
+Ingeniería Eléctrica,TECNICA,Ingeniería
+Instalaciones Eléctricas,TECNICA,Ingeniería
+Diseño Electrónico,TECNICA,Ingeniería
+Ingeniería Química,TECNICA,Ingeniería
+Ingeniería Ambiental,TECNICA,Ingeniería
+Simulación de Procesos,TECNICA,Ingeniería
+Lectura de Planos,TECNICA,Construcción
+Topografía,TECNICA,Construcción
+Albañilería,TECNICA,Construcción
+Encofrado,TECNICA,Construcción
+Armado de Estructuras,TECNICA,Construcción
+Soldadura Estructural,TECNICA,Construcción
+Instalaciones Sanitarias,TECNICA,Construcción
+Instalaciones Eléctricas Residenciales,TECNICA,Construcción
+Supervisión de Obras,TECNICA,Construcción
+Seguridad en Construcción,TECNICA,Construcción
+Presupuestos de Obras,TECNICA,Construcción
+Gestión de Proyectos de Construcción,TECNICA,Construcción
+BIM,TECNICA,Construcción
+Estimación de Materiales,TECNICA,Construcción
+Docencia,TECNICA,Educación
+Planificación Curricular,TECNICA,Educación
+Evaluación Educativa,TECNICA,Educación
+Diseño Instruccional,TECNICA,Educación
+Gestión Educativa,TECNICA,Educación
+Educación Inclusiva,TECNICA,Educación
+Tutoría Académica,TECNICA,Educación
+Capacitación Corporativa,TECNICA,Educación
+Aprendizaje Virtual,TECNICA,Educación
+Desarrollo de Material Didáctico,TECNICA,Educación
+Ventas Consultivas,TECNICA,Comercial
+Negociación Comercial,TECNICA,Comercial
+Gestión de Clientes,TECNICA,Comercial
+Prospección Comercial,TECNICA,Comercial
+Cierre de Ventas,TECNICA,Comercial
+Atención al Cliente,BLANDA,Comercial
+Gestión de Cuentas Clave,TECNICA,Comercial
+Televentas,TECNICA,Comercial
+Gestión de Point of Sale,TECNICA,Comercial
+Merchandising,TECNICA,Comercial
+Marketing Digital,TECNICA,Marketing
+SEO,TECNICA,Marketing
+SEM,TECNICA,Marketing
+Gestión de Redes Sociales,TECNICA,Marketing
+Email Marketing,TECNICA,Marketing
+Analítica Web,TECNICA,Marketing
+Google Analytics,TECNICA,Marketing
+Publicidad Digital,TECNICA,Marketing
+Investigación de Mercados,TECNICA,Marketing
+Branding,TECNICA,Marketing
+Diseño Gráfico,TECNICA,Diseño
+Diseño UX,TECNICA,Diseño
+Diseño UI,TECNICA,Diseño
+Adobe Photoshop,TECNICA,Diseño
+Adobe Illustrator,TECNICA,Diseño
+Adobe InDesign,TECNICA,Diseño
+Edición de Video,TECNICA,Diseño
+Motion Graphics,TECNICA,Diseño
+Diseño Editorial,TECNICA,Diseño
+Diseño de Producto,TECNICA,Diseño
+Mecánica Automotriz,TECNICA,Oficios
+Electricidad Industrial,TECNICA,Oficios
+Carpintería,TECNICA,Oficios
+Cerrajería,TECNICA,Oficios
+Gasfitería,TECNICA,Oficios
+Pintura Industrial,TECNICA,Oficios
+Soldadura MIG,TECNICA,Oficios
+Soldadura TIG,TECNICA,Oficios
+Mantenimiento de Aire Acondicionado,TECNICA,Oficios
+Refrigeración Industrial,TECNICA,Oficios
+Corte de Cabello,TECNICA,Oficios
+Barbería,TECNICA,Oficios
+Estética Facial,TECNICA,Oficios
+Manicura y Pedicura,TECNICA,Oficios
+Tapicería,TECNICA,Oficios
+Gestión de Inventarios,TECNICA,Logística
+Manejo de Almacenes,TECNICA,Logística
+Manejo de Montacargas,TECNICA,Logística
+Planificación de Rutas,TECNICA,Logística
+Distribución de Mercancías,TECNICA,Logística
+Cadena de Suministro,TECNICA,Logística
+Comercio Exterior,TECNICA,Logística
+Gestión Aduanera,TECNICA,Logística
+Control de Stock,TECNICA,Logística
+Logística Internacional,TECNICA,Logística
+Producción Audiovisual,TECNICA,Arte y Medios
+Fotografía Profesional,TECNICA,Arte y Medios
+Fotografía de Producto,TECNICA,Arte y Medios
+Dirección de Arte,TECNICA,Arte y Medios
+Guionismo,TECNICA,Arte y Medios
+Locución,TECNICA,Arte y Medios
+Edición de Audio,TECNICA,Arte y Medios
+Animación Digital,TECNICA,Arte y Medios
+Actuación,TECNICA,Arte y Medios
+Ilustración Digital,TECNICA,Arte y Medios
+Agricultura de Precisión,TECNICA,Agricultura
+Manejo de Cultivos,TECNICA,Agricultura
+Riego Tecnificado,TECNICA,Agricultura
+Fitosanidad,TECNICA,Agricultura
+Producción Ganadera,TECNICA,Agricultura
+Manejo de Invernaderos,TECNICA,Agricultura
+Agroindustria,TECNICA,Agricultura
+Control de Plagas,TECNICA,Agricultura
+Gestión Agrícola,TECNICA,Agricultura
+Cosecha y Postcosecha,TECNICA,Agricultura
+Liderazgo,BLANDA,Habilidades Blandas
+Trabajo en Equipo,BLANDA,Habilidades Blandas
+Comunicación Efectiva,BLANDA,Habilidades Blandas
+Pensamiento Crítico,BLANDA,Habilidades Blandas
+Resolución de Problemas,BLANDA,Habilidades Blandas
+Creatividad,BLANDA,Habilidades Blandas
+Innovación,BLANDA,Habilidades Blandas
+Gestión del Tiempo,BLANDA,Habilidades Blandas
+Adaptabilidad,BLANDA,Habilidades Blandas
+Empatía,BLANDA,Habilidades Blandas
+Escucha Activa,BLANDA,Habilidades Blandas
+Inteligencia Emocional,BLANDA,Habilidades Blandas
+Negociación,BLANDA,Habilidades Blandas
+Orientación a Resultados,BLANDA,Habilidades Blandas
+Toma de Decisiones,BLANDA,Habilidades Blandas
+Pensamiento Analítico,BLANDA,Habilidades Blandas
+Proactividad,BLANDA,Habilidades Blandas
+Gestión del Cambio,BLANDA,Habilidades Blandas
+Manejo de Conflictos,BLANDA,Habilidades Blandas
+Organización,BLANDA,Habilidades Blandas
+Responsabilidad,BLANDA,Habilidades Blandas
+Aprendizaje Continuo,BLANDA,Habilidades Blandas
+Orientación al Cliente,BLANDA,Habilidades Blandas
+Capacidad de Planificación,BLANDA,Habilidades Blandas
+Colaboración,BLANDA,Habilidades Blandas
+Persuasión,BLANDA,Habilidades Blandas
+Resiliencia,BLANDA,Habilidades Blandas
+Ética Profesional,BLANDA,Habilidades Blandas
+Liderazgo de Equipos,BLANDA,Habilidades Blandas
+Presentaciones Públicas,BLANDA,Habilidades Blandas
+Mentoría,BLANDA,Habilidades Blandas
+Coaching,BLANDA,Habilidades Blandas
+Capacidad de Influencia,BLANDA,Habilidades Blandas
+Gestión del Estrés,BLANDA,Habilidades Blandas
+Visión Estratégica,BLANDA,Habilidades Blandas
+Orientación a la Calidad,BLANDA,Habilidades Blandas
+Compromiso Organizacional,BLANDA,Habilidades Blandas
+Autogestión,BLANDA,Habilidades Blandas
+Capacidad de Aprendizaje,BLANDA,Habilidades Blandas
+Pensamiento Sistémico,BLANDA,Habilidades Blandas

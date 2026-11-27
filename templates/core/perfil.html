@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil | EmpleoPredict{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10 px-4">
+    <!-- Tarjeta de Bienvenida -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-slate-200">
+        <div class="bg-indigo-600 px-6 py-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold">Hola, {{ datos.nombres }} {{ datos.apellidos }}</h1>
+                <p class="text-indigo-200 mt-1">
+                    <i class="fa-solid fa-envelope mr-1"></i> {{ datos.email_contacto|default:"Email no registrado" }} | 
+                    <i class="fa-solid fa-phone mr-1"></i> {{ datos.telefono|default:"Teléfono no registrado" }}
+                </p>
+            </div>
+            <a href="{% url 'dashboard' %}" class="bg-white text-indigo-700 px-6 py-3 rounded-lg font-bold shadow hover:bg-gray-100 transition flex items-center">
+                <i class="fa-solid fa-briefcase mr-2"></i> Buscar ofertas para mí
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Panel de Competencias -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex items-center">
+                <i class="fa-solid fa-check-circle text-emerald-500 mr-2"></i>Mis Habilidades Detectadas
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                {% for uc in competencias %}
+                    <span class="px-3 py-1.5 rounded-full text-sm font-medium {% if uc.competencia.tipo == 'TECNICA' %}bg-indigo-100 text-indigo-800 border border-indigo-200{% else %}bg-emerald-100 text-emerald-800 border border-emerald-200{% endif %}">
+                        {{ uc.competencia.nombre }}
+                    </span>
+                {% empty %}
+                    <p class="text-slate-500 text-sm">No se detectaron competencias. Sube un CV actualizado.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Panel de Experiencia -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex items-center">
+                <i class="fa-solid fa-building text-indigo-500 mr-2"></i>Experiencia Laboral
+            </h2>
+            {% for exp in experiencias %}
+                <div class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p class="font-bold text-slate-700">{{ exp.cargo }}</p>
+                    <p class="text-sm text-slate-500">{{ exp.empresa }}</p>
+                    <p class="text-sm text-slate-600 mt-2 line-clamp-3">{{ exp.funciones }}</p>
+                </div>
+            {% empty %}
+                <p class="text-slate-500 text-sm">No se detectó experiencia en el CV.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

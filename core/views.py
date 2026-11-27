@@ -7,7 +7,7 @@ from django.db.models import Count, Value
 from django.db.models.functions import Coalesce, NullIf
 
 from .forms import LoginForm, RegistroForm, SubirCVForm
-from .models import Competencia, DatosPersonales, DocumentoCV, OfertaLaboral, ServicioCapacitacion, UsuarioCompetencia
+from .models import Competencia, DatosPersonales, DocumentoCV, OfertaLaboral,ServicioCapacitacion, UsuarioCompetencia, ExperienciaLaboral, FormacionAcademica
 from .utils import procesar_cv
 
 def inicio(request):
@@ -72,7 +72,7 @@ def subir_cv_view(request):
             else:
                 messages.error(request, mensaje)
 
-            return redirect('subir_cv')
+            return redirect('perfil')
     else:
         form = SubirCVForm()
 
@@ -136,3 +136,18 @@ def servicios_view(request):
             {'nombre': 'Asesoría de CV', 'descripcion': 'Identifica mejoras para presentar tu experiencia y tus competencias.', 'precio': 25, 'capacidad_maxima': 8},
         ]
     return render(request, 'core/servicios.html', {'servicios': servicios, 'demo': demo})
+
+@login_required
+def perfil_view(request):
+    datos, _ = DatosPersonales.objects.get_or_create(usuario=request.user)
+    competencias = UsuarioCompetencia.objects.filter(usuario=request.user).select_related('competencia')
+    experiencias = ExperienciaLaboral.objects.filter(usuario=request.user)
+    formaciones = FormacionAcademica.objects.filter(usuario=request.user)
+    
+    context = {
+        'datos': datos,
+        'competencias': competencias,
+        'experiencias': experiencias,
+        'formaciones': formaciones
+    }
+    return render(request, 'core/perfil.html', context)

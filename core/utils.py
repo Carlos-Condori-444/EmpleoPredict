@@ -2,50 +2,8 @@ import re
 import os
 from pypdf import PdfReader
 from django.db import transaction
-from .models import Competencia, UsuarioCompetencia, DatosPersonales
-
-# Lista base universal de competencias (Técnicas y Blandas) para autodetectar
-COMPETENCIAS_BASE = [
-    # Habilidades Técnicas (Hard Skills)
-    ("Python", "TECNICA", "Tecnología"),
-    ("Django", "TECNICA", "Tecnología"),
-    ("JavaScript", "TECNICA", "Tecnología"),
-    ("SQL", "TECNICA", "Tecnología"),
-    ("PostgreSQL", "TECNICA", "Tecnología"),
-    ("SQLite", "TECNICA", "Tecnología"),
-    ("HTML", "TECNICA", "Tecnología"),
-    ("CSS", "TECNICA", "Tecnología"),
-    ("Tailwind", "TECNICA", "Tecnología"),
-    ("Git", "TECNICA", "Tecnología"),
-    ("GitHub", "TECNICA", "Tecnología"),
-    ("Excel", "TECNICA", "Gestión y Oficina"),
-    ("Power BI", "TECNICA", "Gestión y Oficina"),
-    ("Scrum", "TECNICA", "Gestión de Proyectos"),
-    ("Data Analysis", "TECNICA", "Tecnología"),
-    ("Machine Learning", "TECNICA", "Tecnología"),
-    ("Marketing Digital", "TECNICA", "Comercial"),
-    ("Ventas", "TECNICA", "Comercial"),
-    ("Contabilidad", "TECNICA", "Finanzas"),
-    ("Administración", "TECNICA", "Gestión"),
-    
-    # Habilidades Blandas (Soft Skills)
-    ("Liderazgo", "BLANDA", "Habilidades Blandas"),
-    ("Trabajo en Equipo", "BLANDA", "Habilidades Blandas"),
-    ("Comunicación Asertiva", "BLANDA", "Habilidades Blandas"),
-    ("Resolución de Problemas", "BLANDA", "Habilidades Blandas"),
-    ("Proactividad", "BLANDA", "Habilidades Blandas"),
-    ("Adaptabilidad", "BLANDA", "Habilidades Blandas"),
-    ("Pensamiento Crítico", "BLANDA", "Habilidades Blandas"),
-    ("Gestión del Tiempo", "BLANDA", "Habilidades Blandas"),
-]
-
-def poblar_catalogo_competencias():
-    """Asegura que las competencias base existan en la BD."""
-    for nombre, tipo, categoria in COMPETENCIAS_BASE:
-        Competencia.objects.get_or_create(
-            nombre=nombre,
-            defaults={"tipo": tipo, "categoria": categoria}
-        )
+from django.utils import timezone
+from .models import Competencia, UsuarioCompetencia, DatosPersonales, ExperienciaLaboral, FormacionAcademica
 
 def extraer_texto_pdf(ruta_archivo):
     """
@@ -80,7 +38,7 @@ def extraer_datos_contacto(texto):
     if match_email:
         datos["email"] = match_email.group(0)
 
-    # 2. Teléfono celular (Formatos típicos peruanos: 987654321, 987 654 321, +51 987654321)
+    # 2. Teléfono celular (Más flexible para aceptar guiones y formatos raros)
     patron_tel = r'(?:\+?51[\s-]?)?(?:9\d{2}[\s-]?\d{3}[\s-]?\d{3}|9\d{8})'
     match_tel = re.search(patron_tel, texto)
     if match_tel:
@@ -110,31 +68,46 @@ def extraer_datos_contacto(texto):
 
 def extraer_competencias_del_texto(texto):
     """
-    Busca coincidencias de competencias existentes en el catálogo dentro del texto.
+    Busca competencias en el texto usando la raíz de las palabras (Regex).
+    Esto permite detectar 'proactiva', 'proactivo', 'proactividad' buscando solo 'proactiv'.
     """
-    poblar_catalogo_competencias()
     todas_competencias = Competencia.objects.all()
-    competencias_encontradas = []
+    competencias_encontradas = set() # Usamos un set para evitar duplicados
 
     texto_lower = texto.lower()
 
     for comp in todas_competencias:
-        # Búsqueda por palabra exacta o límite de palabra para evitar falsos positivos
-        nombre = comp.nombre
-        patron = r'\b' + re.escape(nombre.lower()) + r'\b'
-        if re.search(patron, texto_lower):
-            competencias_encontradas.append(comp)
+        nombre = comp.nombre.lower()
+        
+        # TRUCO: Si la palabra tiene más de 5 letras, cortamos las últimas 3 (la raíz).
+        # Ejemplo: "proactividad" -> "proactiv". "liderazgo" -> "lider".
+        if len(nombre) > 5:
+            raiz = nombre[:-3]
+        else:
+            raiz = nombre
 
-    return competencias_encontradas
+        # Buscamos la raíz seguida de cualquier letra (\w*) para atrapar conjugaciones.
+        patron = r'\b' + re.escape(raiz) + r'\w*'
+        
+        if re.search(patron, texto_lower):
+            competencias_encontradas.add(comp)
+
+    return list(competencias_encontradas)
+
+def extraer_bloques_texto(texto, palabras_clave):
+    """
+    Busca un bloque de texto basado en una palabra clave (ej: 'Experiencia').
+    """
+    texto_lower = texto.lower()
+    for palabra in palabras_clave:
+        indice = texto_lower.find(palabra)
+        if indice != -1:
+            # Tomamos los siguientes 500 caracteres como aproximación del bloque
+            bloque = texto[indice:indice+500].strip()
+            return bloque
+    return None
 
 def procesar_cv(documento_cv):
-    """
-    Orquestador principal:
-    1. Lee el PDF y extrae texto plano.
-    2. Extrae teléfono, redes y correo.
-    3. Detecta competencias y las asocia al usuario.
-    4. Actualiza estado a PROCESADO o ERROR.
-    """
     try:
         ruta_archivo = documento_cv.archivo.path
         if not os.path.exists(ruta_archivo):
@@ -148,20 +121,21 @@ def procesar_cv(documento_cv):
             documento_cv.save()
             return False, "No se pudo extraer texto del PDF (podría ser una imagen o estar protegido)."
 
-        # Guardar texto extraído
         documento_cv.texto_extraido = texto
         
         with transaction.atomic():
-            # 1. Actualizar Datos Personales si se encuentran
             usuario = documento_cv.usuario
             datos_contacto = extraer_datos_contacto(texto)
             
+            # 1. Actualizar Datos Personales (Sobrescribiendo si hay info nueva)
             perfil, _ = DatosPersonales.objects.get_or_create(usuario=usuario)
-            if datos_contacto["telefono"] and not perfil.telefono:
+            if datos_contacto["email"]: 
+                perfil.email_contacto = datos_contacto["email"]
+            if datos_contacto["telefono"]: 
                 perfil.telefono = datos_contacto["telefono"]
-            if datos_contacto["linkedin_url"] and not perfil.linkedin_url:
+            if datos_contacto["linkedin_url"]: 
                 perfil.linkedin_url = datos_contacto["linkedin_url"]
-            if datos_contacto["github_url"] and not perfil.github_url:
+            if datos_contacto["github_url"]: 
                 perfil.github_url = datos_contacto["github_url"]
             perfil.save()
 
@@ -173,17 +147,36 @@ def procesar_cv(documento_cv):
                     competencia=comp,
                     defaults={
                         "nivel": "INTERMEDIO",
-                        "evidencia": f"Detectado automáticamente en {documento_cv.nombre_archivo}"
+                        "evidencia": f"Detectado en {documento_cv.nombre_archivo}"
                     }
                 )
 
-            # 3. Marcar como procesado con éxito
+            # 3. Extraer Experiencia Laboral y Formación (Heurística Básica)
+            bloque_exp = extraer_bloques_texto(texto, ["experiencia laboral", "experiencia profesional", "experiencia"])
+            if bloque_exp:
+                ExperienciaLaboral.objects.get_or_create(
+                    usuario=usuario,
+                    cargo="Cargo detectado en CV",
+                    empresa="Ver detalles en el texto",
+                    defaults={'funciones': bloque_exp, 'fecha_inicio': timezone.now().date()}
+                )
+
+            bloque_edu = extraer_bloques_texto(texto, ["educación", "formación académica", "estudios"])
+            if bloque_edu:
+                FormacionAcademica.objects.get_or_create(
+                    usuario=usuario,
+                    institucion="Institución detectada en CV",
+                    carrera="Carrera detectada en CV",
+                    defaults={'descripcion': bloque_edu}
+                )
+
+            # 4. Marcar como procesado
             documento_cv.estado_procesamiento = "PROCESADO"
             documento_cv.save()
 
-        return True, f"CV procesado exitosamente. Se detectaron {len(competencias)} competencias."
+        return True, f"CV procesado. Se detectaron {len(competencias)} competencias y se actualizó el perfil."
 
     except Exception as e:
         documento_cv.estado_procesamiento = "ERROR"
         documento_cv.save()
-        return False, f"Ocurrió un error al procesar el CV: {str(e)}"
+        return False, f"Error al procesar CV: {str(e)}"
