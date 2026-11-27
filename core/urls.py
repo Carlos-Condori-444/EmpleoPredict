@@ -19,5 +19,6 @@ urlpatterns = [
     path('perfil/competencia/<int:pk>/editar/', views.editar_competencia_view, name='editar_competencia'),
     path('perfil/competencia/<int:pk>/eliminar/', views.eliminar_competencia_view, name='eliminar_competencia'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/recomendar/', views.recomendar_ofertas_view, name='recomendar_ofertas'),
     path('servicios/', views.servicios_view, name='servicios'),
 ]

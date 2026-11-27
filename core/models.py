@@ -162,6 +162,8 @@ class OfertaLaboral(models.Model):
     salario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     fuente = models.ForeignKey(FuenteDato, on_delete=models.CASCADE, related_name='ofertas')
     competencias = models.ManyToManyField(Competencia, related_name='ofertas', blank=True)
+    url_oferta = models.URLField(max_length=500, blank=True, null=True)
+    fecha_publicacion = models.DateTimeField(null=True, blank=True)
     fecha_extraccion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -25,6 +25,13 @@
         </div>
         <div class="flex flex-wrap gap-2">
             {% if es_personalizado %}
+                <form method="post" action="{% url 'recomendar_ofertas' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                        <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                        <span>Recomendar</span>
+                    </button>
+                </form>
                 <a href="{% url 'perfil' %}" class="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">
                     <i class="fa-solid fa-user-pen mr-1.5" aria-hidden="true"></i>Editar mi perfil
                 </a>
@@ -64,10 +71,10 @@
         <div class="mt-6 grid gap-5 lg:grid-cols-3">
             <!-- Ofertas compatibles -->
             <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 sm:p-6">
-                <div class="mb-4 flex items-center justify-between gap-2">
-                    <h2 class="text-lg font-bold text-slate-950">Ofertas recomendadas para tu perfil</h2>
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-bold text-slate-950">Top 10 recomendaciones recientes para tu perfil</h2>
                     <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                        Basado en tus competencias
+                        Últimos 30 días
                     </span>
                 </div>
                 {% if ofertas_recomendadas %}
@@ -81,23 +88,46 @@
                                             {{ item.oferta.empresa|default:"Empresa confidencial" }}
                                             {% if item.oferta.region %} · {{ item.oferta.region }}{% endif %}
                                             · {{ item.oferta.fuente.nombre }}
+                                            · {{ item.oferta.fecha_publicacion|default:item.oferta.fecha_extraccion|date:"d/m/Y" }}
                                         </p>
                                     </div>
-                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                                        {{ item.coincidencias }} coincidencia{{ item.coincidencias|pluralize }}
-                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                                            {{ item.coincidencias }} coincidencia{{ item.coincidencias|pluralize }}
+                                        </span>
+                                        {% if item.oferta.url_oferta %}
+                                            <a href="{{ item.oferta.url_oferta }}" target="_blank" rel="noopener noreferrer" class="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-indigo-700">
+                                                Ver oferta
+                                            </a>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div class="mt-3 flex flex-wrap gap-1.5">
-                                    {% for nombre in item.coincidentes %}
-                                        <span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
-                                            <i class="fa-solid fa-check mr-1" aria-hidden="true"></i>{{ nombre }}
-                                        </span>
-                                    {% endfor %}
-                                    {% for nombre in item.faltantes %}
-                                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
-                                            Por reforzar: {{ nombre }}
-                                        </span>
-                                    {% endfor %}
+                                <div class="mt-3 space-y-1.5">
+                                    {% if item.coincidentes %}
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="text-[11px] font-semibold text-emerald-700">Ya posees:</span>
+                                            {% for nombre in item.coincidentes %}
+                                                <span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+                                                    <i class="fa-solid fa-check mr-1" aria-hidden="true"></i>{{ nombre }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if item.faltantes %}
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="text-[11px] font-semibold text-amber-800">Por reforzar:</span>
+                                            {% for nombre in item.faltantes %}
+                                                <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                                                    {{ nombre }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if not item.coincidentes and not item.faltantes %}
+                                        <p class="text-xs italic text-slate-500">
+                                            El resumen no detalla competencias específicas; revisa los requisitos completos en «Ver oferta».
+                                        </p>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}
@@ -119,7 +149,7 @@
             <!-- Brechas y Orientación -->
             <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 class="text-lg font-bold text-slate-950">Orientación profesional</h2>
-                <p class="mt-1 text-xs text-slate-500">Competencias demandadas que aún no figuran en tu perfil:</p>
+                <p class="mt-1 text-xs text-slate-500">Competencias demandadas en tu sector que aún no figuran en tu perfil:</p>
                 {% if brechas %}
                     <ul class="mt-4 space-y-2">
                         {% for comp in brechas %}
@@ -129,8 +159,10 @@
                             </li>
                         {% endfor %}
                     </ul>
+                {% elif ofertas_recomendadas %}
+                    <p class="mt-4 text-sm text-emerald-700">¡Excelente! Ya cuentas con las competencias más demandadas en las ofertas de tu sector.</p>
                 {% else %}
-                    <p class="mt-4 text-sm text-emerald-700">¡Excelente! Ya cuentas con las competencias más demandadas registradas.</p>
+                    <p class="mt-4 text-sm text-slate-500">Aún no hay suficientes ofertas recientes de tu área para calcular brechas.</p>
                 {% endif %}
 
                 <div class="mt-5 space-y-2 border-t border-slate-100 pt-4">
@@ -174,7 +206,9 @@
                 </ul>
             </details>
             {% else %}
-            <p class="mt-5 text-sm text-slate-500">Aún no hay ofertas con competencias asociadas.</p>
+            <p class="mt-5 text-sm text-slate-500">
+                {% if es_personalizado %}Aún no hay ofertas recientes de tu área profesional para comparar competencias.{% else %}Aún no hay ofertas con competencias asociadas.{% endif %}
+            </p>
             {% endif %}
         </article>
         <article class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -192,7 +226,9 @@
                 </ul>
             </details>
             {% else %}
-            <p class="mt-5 text-sm text-slate-500">Aún no hay ofertas laborales registradas.</p>
+            <p class="mt-5 text-sm text-slate-500">
+                {% if es_personalizado %}Aún no hay ofertas recientes compatibles en tu sector.{% else %}Aún no hay ofertas laborales registradas.{% endif %}
+            </p>
             {% endif %}
         </article>
     </div>

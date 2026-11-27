@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
@@ -5,7 +7,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db.models import Count, Q, Value
 from django.db.models.functions import Coalesce, NullIf
+from django.utils import timezone
 from django.views.decorators.http import require_POST
+
+from .scraper import obtener_terminos_busqueda_usuario, recomendar_ofertas_para_usuario
 
 from .forms import (
     DatosPersonalesForm,
@@ -179,6 +184,55 @@ def eliminar_cv_view(request, pk):
     return redirect('subir_cv')
 
 
+CATEGORIAS_TRANSVERSALES = {
+    'Habilidades Blandas', 'Gestión y Oficina', 'Gestión', 'Gestión de Proyectos', '',
+}
+COMPETENCIAS_TRANSVERSALES = {
+    'excel', 'inglés', 'ingles', 'word', 'powerpoint', 'ofimática', 'ofimatica', 'redacción', 'redaccion',
+}
+MAPA_TEXTO_CATEGORIA = (
+    (('derecho', 'abogad', 'legal', 'penal', 'civil', 'jurídic', 'juridic'), 'Legal'),
+    (('salud', 'enferm', 'médic', 'medic', 'clínic', 'clinic', 'farmac'), 'Salud'),
+    (('educa', 'docent', 'profesor', 'pedagog'), 'Educación'),
+    (('contab', 'finanz', 'auditor', 'tribut'), 'Finanzas'),
+    (('administra', 'oficina', 'asistente', 'recursos humanos'), 'Gestión y Oficina'),
+    (('market', 'comunica', 'publicidad', 'redes sociales'), 'Marketing'),
+    (('ingenier',), 'Ingeniería'),
+    (('sistema', 'software', 'program', 'desarroll', 'datos', 'python', 'devops', 'cloud', 'ti '), 'Tecnología'),
+)
+
+
+def _obtener_categorias_usuario(perfil_profesional, mis_competencias):
+    categorias = set()
+    texto_perfil = ' '.join([
+        perfil_profesional.puesto_objetivo or '',
+        perfil_profesional.titulo_profesional or '',
+        perfil_profesional.area_profesional or '',
+    ]).lower()
+
+    for palabras, categoria in MAPA_TEXTO_CATEGORIA:
+        if any(p in texto_perfil for p in palabras):
+            categorias.add(categoria)
+
+    for uc in mis_competencias:
+        cat = uc.competencia.categoria
+        if cat and cat not in CATEGORIAS_TRANSVERSALES:
+            categorias.add(cat)
+
+    return categorias
+
+
+def _competencia_pertinente_al_sector(competencia, categorias_usuario):
+    if not categorias_usuario:
+        return True
+    if competencia.nombre.strip().lower() in COMPETENCIAS_TRANSVERSALES:
+        return True
+    cat = competencia.categoria
+    if cat is None or cat in CATEGORIAS_TRANSVERSALES:
+        return True
+    return cat in categorias_usuario
+
+
 def _agrupar_regiones(queryset):
     regiones = list(
         queryset.annotate(nombre=Coalesce(NullIf('region', Value('')), Value('Sin región')))
@@ -226,26 +280,60 @@ def dashboard_view(request):
         )
         mis_comp_ids = [uc.competencia_id for uc in mis_competencias]
         mis_comp_set = {uc.competencia_id for uc in mis_competencias}
+        mis_comp_tecnicas_ids = [
+            uc.competencia_id for uc in mis_competencias if uc.competencia.tipo == 'TECNICA'
+        ]
+        terminos_perfil = obtener_terminos_busqueda_usuario(request.user)
+        tiene_objetivo = any(
+            (getattr(perfil_profesional, campo, '') or '').strip()
+            for campo in ('puesto_objetivo', 'titulo_profesional', 'area_profesional')
+        )
 
-        if mis_comp_ids:
+        filtro_perfil = Q()
+        if tiene_objetivo:
+            for termino in terminos_perfil:
+                filtro_perfil |= (
+                    Q(titulo__icontains=termino)
+                    | Q(descripcion__icontains=termino)
+                    | Q(sector__icontains=termino)
+                )
+            if mis_comp_tecnicas_ids:
+                filtro_perfil |= Q(competencias__in=mis_comp_tecnicas_ids)
+        elif mis_comp_tecnicas_ids:
+            filtro_perfil |= Q(competencias__in=mis_comp_tecnicas_ids)
+        elif mis_comp_ids:
+            filtro_perfil |= Q(competencias__in=mis_comp_ids)
+
+        if filtro_perfil:
+            fecha_limite = timezone.now() - timedelta(days=30)
             ofertas_qs = (
-                OfertaLaboral.objects.filter(competencias__in=mis_comp_ids)
+                OfertaLaboral.objects.filter(filtro_perfil)
+                .filter(
+                    Q(fecha_publicacion__gte=fecha_limite)
+                    | Q(fecha_publicacion__isnull=True, fecha_extraccion__gte=fecha_limite)
+                )
                 .annotate(coincidencias=Count('competencias', filter=Q(competencias__in=mis_comp_ids), distinct=True))
                 .select_related('fuente').prefetch_related('competencias')
-                .order_by('-coincidencias', '-fecha_extraccion')
+                .order_by('-coincidencias', '-fecha_publicacion', '-fecha_extraccion')
+                .distinct()
             )
             total_compatibles = ofertas_qs.count()
             regiones = _agrupar_regiones(ofertas_qs)
         else:
             ofertas_qs = OfertaLaboral.objects.none()
             total_compatibles = 0
-            regiones = _agrupar_regiones(OfertaLaboral.objects.all())
+            regiones = []
+
+        categorias_usuario = _obtener_categorias_usuario(perfil_profesional, mis_competencias)
 
         ofertas_recomendadas = []
-        for oferta in ofertas_qs[:6]:
+        for oferta in ofertas_qs[:10]:
             todas_oferta = list(oferta.competencias.all())
             coincidentes = [c.nombre for c in todas_oferta if c.id in mis_comp_set]
-            faltantes = [c.nombre for c in todas_oferta if c.id not in mis_comp_set]
+            faltantes = [
+                c.nombre for c in todas_oferta
+                if c.id not in mis_comp_set and _competencia_pertinente_al_sector(c, categorias_usuario)
+            ]
             ofertas_recomendadas.append({
                 'oferta': oferta,
                 'coincidencias': len(coincidentes),
@@ -253,15 +341,25 @@ def dashboard_view(request):
                 'faltantes': faltantes[:4],
             })
 
-        top_mercado = list(
-            Competencia.objects.annotate(total=Count('ofertas'))
-            .filter(total__gt=0).order_by('-total', 'nombre')[:8]
-        )
-        competencias = [
-            {'nombre': c.nombre, 'total': c.total, 'tengo': c.id in mis_comp_set}
-            for c in top_mercado[:5]
-        ]
-        brechas = [c for c in top_mercado if c.id not in mis_comp_set][:5]
+        if total_compatibles > 0:
+            ofertas_sector_ids = list(ofertas_qs.values_list('id', flat=True))
+            candidatas = (
+                Competencia.objects.filter(ofertas__id__in=ofertas_sector_ids)
+                .annotate(total=Count('ofertas', filter=Q(ofertas__id__in=ofertas_sector_ids), distinct=True))
+                .filter(total__gt=0)
+                .order_by('-total', 'nombre')
+            )
+            top_mercado = [
+                c for c in candidatas if _competencia_pertinente_al_sector(c, categorias_usuario)
+            ][:8]
+            competencias = [
+                {'nombre': c.nombre, 'total': c.total, 'tengo': c.id in mis_comp_set}
+                for c in top_mercado[:5]
+            ]
+            brechas = [c for c in top_mercado if c.id not in mis_comp_set][:5]
+        else:
+            competencias = []
+            brechas = []
 
         total_cvs = DocumentoCV.objects.filter(usuario=request.user).count()
         total_reservas = Reserva.objects.filter(usuario=request.user).count()
@@ -305,6 +403,29 @@ def dashboard_view(request):
         'competencias': competencias, 'regiones': regiones,
         'incluye_arbeitnow': OfertaLaboral.objects.filter(fuente__nombre='Arbeitnow').exists(),
     })
+
+
+@login_required
+@require_POST
+def recomendar_ofertas_view(request):
+    resultado = recomendar_ofertas_para_usuario(request.user, limite=10, dias_max=30)
+    if not resultado['terminos']:
+        messages.warning(
+            request,
+            'Primero sube tu CV o agrega tu puesto objetivo y competencias en Mi Perfil para recomendar vacantes.',
+        )
+    elif resultado['fuentes_ok']:
+        messages.success(
+            request,
+            f"Búsqueda en tiempo real completada ({', '.join(resultado['fuentes_ok'])}): "
+            f"{resultado['nuevas']} ofertas recientes nuevas encontradas para {', '.join(resultado['terminos'])}.",
+        )
+    else:
+        messages.warning(
+            request,
+            'No se pudieron obtener nuevas ofertas en este momento desde las fuentes externas.',
+        )
+    return redirect('dashboard')
 
 
 def servicios_view(request):
