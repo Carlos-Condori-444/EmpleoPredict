@@ -15,7 +15,7 @@ CATALOGO_SERVICIOS = [
         'precio': 0,
         'otorga_certificado': True,
         'es_externo': True,
-        'url_externa': 'https://www.netacad.com/courses/programming/python-essentials-1',
+        'url_externa': 'https://www.netacad.com/courses/python-essentials-1?courseLang=es-XL',
         'competencias': ['Python'],
     },
     {
@@ -28,7 +28,7 @@ CATALOGO_SERVICIOS = [
         'precio': 0,
         'otorga_certificado': True,
         'es_externo': True,
-        'url_externa': 'https://www.netacad.com/courses/introduction-to-cybersecurity',
+        'url_externa': 'https://www.netacad.com/courses/introduction-to-cybersecurity?courseLang=es-XL',
         'competencias': ['Ciberseguridad', 'Redes'],
     },
     {
@@ -41,7 +41,7 @@ CATALOGO_SERVICIOS = [
         'precio': 0,
         'otorga_certificado': True,
         'es_externo': True,
-        'url_externa': 'https://www.empleosperu.gob.pe/portal-mtpe/',
+        'url_externa': 'https://capacitacionlaboral.trabajo.gob.pe/cursos/',
         'competencias': ['Trabajo en Equipo', 'Comunicación', 'Atención al Cliente'],
     },
     {
