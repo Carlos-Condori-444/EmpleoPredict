@@ -3,55 +3,449 @@
 {% block title %}Mi Perfil | EmpleoPredict{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-10 px-4">
-    <!-- Tarjeta de Bienvenida -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-slate-200">
-        <div class="bg-indigo-600 px-6 py-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="mx-auto max-w-6xl space-y-8">
+    <!-- Encabezado de Perfil -->
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col justify-between gap-5 bg-gradient-to-r from-indigo-700 to-indigo-600 px-6 py-7 text-white md:flex-row md:items-center">
             <div>
-                <h1 class="text-3xl font-bold">Hola, {{ datos.nombres }} {{ datos.apellidos }}</h1>
-                <p class="text-indigo-200 mt-1">
-                    <i class="fa-solid fa-envelope mr-1"></i> {{ datos.email_contacto|default:"Email no registrado" }} | 
-                    <i class="fa-solid fa-phone mr-1"></i> {{ datos.telefono|default:"Teléfono no registrado" }}
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="text-2xl font-bold sm:text-3xl">{{ datos.nombres }} {{ datos.apellidos }}</h1>
+                    {% if perfil_profesional.titulo_profesional %}
+                        <span class="rounded-full bg-white/15 px-3 py-0.5 text-xs font-semibold text-indigo-100">
+                            {{ perfil_profesional.titulo_profesional }}
+                        </span>
+                    {% endif %}
+                </div>
+                <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-indigo-100">
+                    <span><i class="fa-solid fa-envelope mr-1.5" aria-hidden="true"></i>{{ datos.email_contacto|default:"Correo no registrado" }}</span>
+                    <span><i class="fa-solid fa-phone mr-1.5" aria-hidden="true"></i>{{ datos.telefono|default:"Teléfono no registrado" }}</span>
+                    {% if datos.ciudad or datos.pais %}
+                        <span><i class="fa-solid fa-location-dot mr-1.5" aria-hidden="true"></i>{{ datos.ciudad }}{% if datos.ciudad and datos.pais %}, {% endif %}{{ datos.pais }}</span>
+                    {% endif %}
                 </p>
             </div>
-            <a href="{% url 'dashboard' %}" class="bg-white text-indigo-700 px-6 py-3 rounded-lg font-bold shadow hover:bg-gray-100 transition flex items-center">
-                <i class="fa-solid fa-briefcase mr-2"></i> Buscar ofertas para mí
-            </a>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'subir_cv' %}" class="inline-flex items-center gap-2 rounded-lg border border-indigo-400 bg-indigo-800/60 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-800">
+                    <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                    <span>Subir nuevo CV</span>
+                </a>
+                <a href="{% url 'dashboard' %}" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50">
+                    <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+                    <span>Mi Dashboard</span>
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Panel de Competencias -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex items-center">
-                <i class="fa-solid fa-check-circle text-emerald-500 mr-2"></i>Mis Habilidades Detectadas
-            </h2>
-            <div class="flex flex-wrap gap-2">
-                {% for uc in competencias %}
-                    <span class="px-3 py-1.5 rounded-full text-sm font-medium {% if uc.competencia.tipo == 'TECNICA' %}bg-indigo-100 text-indigo-800 border border-indigo-200{% else %}bg-emerald-100 text-emerald-800 border border-emerald-200{% endif %}">
-                        {{ uc.competencia.nombre }}
-                    </span>
-                {% empty %}
-                    <p class="text-slate-500 text-sm">No se detectaron competencias. Sube un CV actualizado.</p>
-                {% endfor %}
+    {% if datos_faltantes %}
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-600" aria-hidden="true"></i>
+                <div>
+                    <p class="font-semibold">Completa tu información básica para mejorar tus recomendaciones:</p>
+                    <p class="mt-0.5 text-xs text-amber-800">Pendiente: {{ datos_faltantes|join:", " }}.</p>
+                </div>
             </div>
         </div>
+    {% endif %}
 
-        <!-- Panel de Experiencia -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex items-center">
-                <i class="fa-solid fa-building text-indigo-500 mr-2"></i>Experiencia Laboral
+    <!-- Datos Personales y Perfil Profesional -->
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <!-- Datos Personales -->
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+                <i class="fa-solid fa-address-card text-indigo-600" aria-hidden="true"></i>
+                <span>Datos Personales</span>
             </h2>
-            {% for exp in experiencias %}
-                <div class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <p class="font-bold text-slate-700">{{ exp.cargo }}</p>
-                    <p class="text-sm text-slate-500">{{ exp.empresa }}</p>
-                    <p class="text-sm text-slate-600 mt-2 line-clamp-3">{{ exp.funciones }}</p>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="guardar_datos">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {% for field in datos_form %}
+                        <div class="{% if field.name == 'linkedin_url' or field.name == 'github_url' or field.name == 'portafolio_url' %}sm:col-span-2{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
-            {% empty %}
-                <p class="text-slate-500 text-sm">No se detectó experiencia en el CV.</p>
-            {% endfor %}
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    <span>Guardar datos personales</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Perfil Profesional Universal -->
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+                <i class="fa-solid fa-user-tie text-indigo-600" aria-hidden="true"></i>
+                <span>Perfil Profesional</span>
+            </h2>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="guardar_profesional">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {% for field in profesional_form %}
+                        <div class="{% if field.name == 'resumen_profesional' or field.name == 'titulo_profesional' %}sm:col-span-2{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    <span>Guardar perfil profesional</span>
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Módulo de Competencias -->
+    <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <h2 class="flex items-center gap-2 text-lg font-bold text-slate-900">
+                <i class="fa-solid fa-award text-amber-500" aria-hidden="true"></i>
+                <span>Mis Competencias ({{ competencias.count }})</span>
+            </h2>
+            <span class="text-xs text-slate-500">Edita el nivel detectado o agrega habilidades nuevas</span>
         </div>
+
+        {% if competencias %}
+            <div class="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+                {% for uc in competencias %}
+                    <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-bold text-slate-900">{{ uc.competencia.nombre }}</span>
+                                    <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {% if uc.competencia.tipo == 'TECNICA' %}bg-indigo-100 text-indigo-800{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                                        {{ uc.competencia.get_tipo_display }}
+                                    </span>
+                                    <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                        {{ uc.get_nivel_display }}
+                                    </span>
+                                </div>
+                                {% if uc.anios_experiencia or uc.evidencia %}
+                                    <p class="mt-1.5 text-xs text-slate-600">
+                                        {% if uc.anios_experiencia %}<span>{{ uc.anios_experiencia }} años exp.</span>{% endif %}
+                                        {% if uc.anios_experiencia and uc.evidencia %} · {% endif %}
+                                        {% if uc.evidencia %}<span>{{ uc.evidencia }}</span>{% endif %}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{% url 'eliminar_competencia' uc.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" title="Eliminar competencia" class="rounded-md p-1.5 text-xs text-rose-600 hover:bg-rose-50">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-700">Editar nivel / evidencia</summary>
+                            <form method="post" action="{% url 'editar_competencia' uc.pk %}" class="mt-3 space-y-2 border-t border-slate-200 pt-3">
+                                {% csrf_token %}
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Nivel</label>
+                                        <select name="nivel" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                            {% for val, label in nivel_choices %}
+                                                <option value="{{ val }}" {% if uc.nivel == val %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Años de experiencia</label>
+                                        <input type="number" step="0.5" min="0" name="anios_experiencia" value="{{ uc.anios_experiencia|default_if_none:'' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-slate-600">Evidencia</label>
+                                    <input type="text" name="evidencia" value="{{ uc.evidencia }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                </div>
+                                <button type="submit" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700">Actualizar</button>
+                            </form>
+                        </details>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mb-5 text-sm text-slate-500">Aún no tienes competencias registradas. Sube tu CV o agrega una manualmente abajo.</p>
+        {% endif %}
+
+        <details class="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4" {% if comp_form.errors %}open{% endif %}>
+            <summary class="cursor-pointer text-sm font-semibold text-indigo-700">
+                <i class="fa-solid fa-plus mr-1.5" aria-hidden="true"></i>Agregar competencia
+            </summary>
+            <form method="post" class="mt-4 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="agregar_competencia">
+                {% if comp_form.non_field_errors %}
+                    <p class="rounded-md bg-rose-50 p-2.5 text-xs font-medium text-rose-700">{{ comp_form.non_field_errors.0 }}</p>
+                {% endif %}
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for field in comp_form %}
+                        <div class="{% if field.name == 'evidencia' %}sm:col-span-2 lg:col-span-3{% endif %}">
+                            <label for="{{ field.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    <span>Agregar competencia</span>
+                </button>
+            </form>
+        </details>
+    </section>
+
+    <!-- Experiencia Laboral y Formación Académica -->
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <!-- Experiencia Laboral -->
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+                <i class="fa-solid fa-building text-indigo-600" aria-hidden="true"></i>
+                <span>Experiencia Laboral</span>
+            </h2>
+
+            <div class="mb-5 space-y-3">
+                {% for exp in experiencias %}
+                    <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-bold text-slate-900">{{ exp.cargo }}</p>
+                                <p class="text-sm font-medium text-indigo-700">{{ exp.empresa }}</p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ exp.fecha_inicio|date:"d/m/Y" }} - {% if exp.trabajo_actual %}Actualidad{% elif exp.fecha_fin %}{{ exp.fecha_fin|date:"d/m/Y" }}{% else %}Sin fecha fin{% endif %}
+                                    {% if exp.ubicacion %} · {{ exp.ubicacion }}{% endif %}
+                                </p>
+                            </div>
+                            <form method="post" action="{% url 'eliminar_experiencia' exp.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" title="Eliminar experiencia" class="rounded-md p-1.5 text-xs text-rose-600 hover:bg-rose-50">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% if exp.funciones %}
+                            <p class="mt-2 whitespace-pre-line text-sm text-slate-600">{{ exp.funciones }}</p>
+                        {% endif %}
+                        {% if exp.herramientas %}
+                            <p class="mt-1 text-xs text-slate-500"><strong>Herramientas:</strong> {{ exp.herramientas }}</p>
+                        {% endif %}
+
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-700">Editar experiencia</summary>
+                            <form method="post" action="{% url 'editar_experiencia' exp.pk %}" class="mt-3 space-y-2.5 border-t border-slate-200 pt-3">
+                                {% csrf_token %}
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Cargo *</label>
+                                        <input type="text" name="cargo" value="{{ exp.cargo }}" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Empresa *</label>
+                                        <input type="text" name="empresa" value="{{ exp.empresa }}" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Departamento</label>
+                                        <input type="text" name="departamento" value="{{ exp.departamento }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Ubicación</label>
+                                        <input type="text" name="ubicacion" value="{{ exp.ubicacion }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Fecha inicio *</label>
+                                        <input type="date" name="fecha_inicio" value="{{ exp.fecha_inicio|date:'Y-m-d' }}" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Fecha fin</label>
+                                        <input type="date" name="fecha_fin" value="{{ exp.fecha_fin|date:'Y-m-d' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                </div>
+                                <label class="inline-flex items-center gap-2 text-xs text-slate-700">
+                                    <input type="checkbox" name="trabajo_actual" {% if exp.trabajo_actual %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-indigo-600">
+                                    <span>Actualmente trabajo aquí</span>
+                                </label>
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-slate-600">Funciones</label>
+                                    <textarea name="funciones" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">{{ exp.funciones }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-slate-600">Logros</label>
+                                    <textarea name="logros" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">{{ exp.logros }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-slate-600">Herramientas</label>
+                                    <input type="text" name="herramientas" value="{{ exp.herramientas }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                </div>
+                                <button type="submit" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700">Guardar cambios</button>
+                            </form>
+                        </details>
+                    </div>
+                {% empty %}
+                    <p class="text-sm text-slate-500">No hay experiencias registradas todavía.</p>
+                {% endfor %}
+            </div>
+
+            <details class="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4" {% if exp_form.errors %}open{% endif %}>
+                <summary class="cursor-pointer text-sm font-semibold text-indigo-700">
+                    <i class="fa-solid fa-plus mr-1.5" aria-hidden="true"></i>Agregar experiencia laboral
+                </summary>
+                <form method="post" class="mt-4 space-y-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="agregar_experiencia">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {% for field in exp_form %}
+                            <div class="{% if field.name == 'funciones' or field.name == 'logros' or field.name == 'herramientas' or field.name == 'trabajo_actual' %}sm:col-span-2{% endif %}">
+                                {% if field.name == 'trabajo_actual' %}
+                                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                                        {{ field }}
+                                        <span>{{ field.label }}</span>
+                                    </label>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.errors %}
+                                    <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Guardar experiencia</span>
+                    </button>
+                </form>
+            </details>
+        </section>
+
+        <!-- Formación Académica -->
+        <section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3 text-lg font-bold text-slate-900">
+                <i class="fa-solid fa-graduation-cap text-indigo-600" aria-hidden="true"></i>
+                <span>Formación Académica</span>
+            </h2>
+
+            <div class="mb-5 space-y-3">
+                {% for edu in formaciones %}
+                    <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-bold text-slate-900">{{ edu.carrera }}</p>
+                                <p class="text-sm font-medium text-indigo-700">{{ edu.institucion }}</p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {% if edu.nivel_academico %}{{ edu.nivel_academico }}{% endif %}
+                                    {% if edu.estado_estudios %} · {{ edu.estado_estudios }}{% endif %}
+                                    {% if edu.fecha_inicio or edu.fecha_fin %}
+                                        · {{ edu.fecha_inicio|date:"Y"|default:"" }}{% if edu.fecha_fin %} - {{ edu.fecha_fin|date:"Y" }}{% endif %}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <form method="post" action="{% url 'eliminar_formacion' edu.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" title="Eliminar formación" class="rounded-md p-1.5 text-xs text-rose-600 hover:bg-rose-50">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% if edu.descripcion %}
+                            <p class="mt-2 whitespace-pre-line text-sm text-slate-600">{{ edu.descripcion }}</p>
+                        {% endif %}
+
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-700">Editar formación</summary>
+                            <form method="post" action="{% url 'editar_formacion' edu.pk %}" class="mt-3 space-y-2.5 border-t border-slate-200 pt-3">
+                                {% csrf_token %}
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Institución *</label>
+                                        <input type="text" name="institucion" value="{{ edu.institucion }}" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Carrera *</label>
+                                        <input type="text" name="carrera" value="{{ edu.carrera }}" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Nivel académico</label>
+                                        <input type="text" name="nivel_academico" value="{{ edu.nivel_academico }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Grado obtenido</label>
+                                        <input type="text" name="grado_obtenido" value="{{ edu.grado_obtenido }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Fecha inicio</label>
+                                        <input type="date" name="fecha_inicio" value="{{ edu.fecha_inicio|date:'Y-m-d' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Fecha fin</label>
+                                        <input type="date" name="fecha_fin" value="{{ edu.fecha_fin|date:'Y-m-d' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="mb-1 block text-xs font-medium text-slate-600">Estado de estudios</label>
+                                        <input type="text" name="estado_estudios" value="{{ edu.estado_estudios }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-medium text-slate-600">Descripción</label>
+                                    <textarea name="descripcion" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900">{{ edu.descripcion }}</textarea>
+                                </div>
+                                <button type="submit" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700">Guardar cambios</button>
+                            </form>
+                        </details>
+                    </div>
+                {% empty %}
+                    <p class="text-sm text-slate-500">No hay formación académica registrada todavía.</p>
+                {% endfor %}
+            </div>
+
+            <details class="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4" {% if formacion_form.errors %}open{% endif %}>
+                <summary class="cursor-pointer text-sm font-semibold text-indigo-700">
+                    <i class="fa-solid fa-plus mr-1.5" aria-hidden="true"></i>Agregar formación académica
+                </summary>
+                <form method="post" class="mt-4 space-y-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="agregar_formacion">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {% for field in formacion_form %}
+                            <div class="{% if field.name == 'descripcion' %}sm:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <p class="mt-1 text-xs font-medium text-rose-600">{{ field.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        <span>Guardar formación</span>
+                    </button>
+                </form>
+            </details>
+        </section>
     </div>
 </div>
 {% endblock %}
