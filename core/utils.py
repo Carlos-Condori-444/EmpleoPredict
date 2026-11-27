@@ -68,27 +68,31 @@ def extraer_datos_contacto(texto):
 
 def extraer_competencias_del_texto(texto):
     """
-    Busca competencias en el texto usando la raíz de las palabras (Regex).
-    Esto permite detectar 'proactiva', 'proactivo', 'proactividad' buscando solo 'proactiv'.
+    Busca competencias en el texto evitando falsos positivos (ej. 'Docker' -> 'documentos').
+    Usa coincidencia exacta de palabra para competencias técnicas/cortas y raíz morfológica
+    solo en habilidades blandas largas.
     """
-    todas_competencias = Competencia.objects.all()
-    competencias_encontradas = set() # Usamos un set para evitar duplicados
+    if not texto:
+        return []
 
+    todas_competencias = Competencia.objects.all()
+    competencias_encontradas = set()
     texto_lower = texto.lower()
 
     for comp in todas_competencias:
-        nombre = comp.nombre.lower()
-        
-        # TRUCO: Si la palabra tiene más de 5 letras, cortamos las últimas 3 (la raíz).
-        # Ejemplo: "proactividad" -> "proactiv". "liderazgo" -> "lider".
-        if len(nombre) > 5:
-            raiz = nombre[:-3]
-        else:
-            raiz = nombre
+        nombre = comp.nombre.strip().lower()
+        if not nombre:
+            continue
 
-        # Buscamos la raíz seguida de cualquier letra (\w*) para atrapar conjugaciones.
-        patron = r'\b' + re.escape(raiz) + r'\w*'
-        
+        if comp.tipo == 'BLANDA' and ' ' not in nombre and len(nombre) >= 8:
+            raiz = re.sub(r'(?:idad|ción|sión|miento|azgo|ancia|encia)$', '', nombre)
+            if len(raiz) >= 5:
+                patron = r'(?<!\w)' + re.escape(raiz) + r'\w*(?!\w)'
+            else:
+                patron = r'(?<!\w)' + re.escape(nombre) + r'(?:s|es)?(?!\w)'
+        else:
+            patron = r'(?<!\w)' + re.escape(nombre) + r'(?:s|es)?(?!\w)'
+
         if re.search(patron, texto_lower):
             competencias_encontradas.add(comp)
 
